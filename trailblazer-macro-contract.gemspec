@@ -7,8 +7,8 @@ Gem::Specification.new do |spec|
   spec.version       = Trailblazer::Macro::Contract::VERSION
   spec.authors       = ["Nick Sutterer"]
   spec.email         = ["apotonick@gmail.com"]
-  spec.description   = 'A high-level architecture introducing new abstractions such as control flow, operations, form objects or policies.'
-  spec.summary       = 'A high-level architecture for Ruby and Rails.'
+  spec.description   = 'Trailblazer Operation Macros for Reform Contracts'
+  spec.summary       = 'Traiblazer Macros for Form Contracts based on Reform'
   spec.homepage      = "http://trailblazer.to"
   spec.license       = "LGPL-3.0"
 
@@ -17,6 +17,7 @@ Gem::Specification.new do |spec|
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ["lib"]
 
+  spec.add_dependency "trailblazer", ">= 2.1.0.beta4", "< 2.2.0"
   spec.add_dependency "trailblazer-activity",  ">= 0.5.0", "< 0.6.0"
   spec.add_dependency "trailblazer-operation", ">= 0.2.3", "< 0.3.0"
 
@@ -24,7 +25,6 @@ Gem::Specification.new do |spec|
   spec.add_dependency "reform", ">= 2.2.0", "< 3.0.0"
 
   spec.add_development_dependency "activemodel" # for Reform::AM::V
-
   spec.add_development_dependency "bundler"
   spec.add_development_dependency "dry-validation"
   spec.add_development_dependency "minitest"
@@ -32,6 +32,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rake"
 
   spec.add_development_dependency "roar"
-  # spec.required_ruby_version = '>= 1.9.3'
   spec.required_ruby_version = '>= 2.0.0'
 end
