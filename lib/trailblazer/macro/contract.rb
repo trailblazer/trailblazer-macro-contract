@@ -1,0 +1,7 @@
+require "trailblazer"
+require "reform"
+require "trailblazer/macro/contract/version"
+require "trailblazer/operation/contract/dsl"
+require "trailblazer/operation/contract/build"
+require "trailblazer/operation/contract/validate"
+require "trailblazer/operation/contract/persist"
