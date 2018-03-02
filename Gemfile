@@ -7,7 +7,7 @@ gem "reform-rails"
 gem "activesupport"#, "~> 4.2.0"
 
 # gem "reform", "~> 2.0.0"
-gem "trailblazer", path: "../trailblazer"
+gem "trailblazer"#, path: "../trailblazer"
 gem "reform"#, path: "../reform"
 #gem "reform", github: "trailblazer/reform"
 gem "multi_json"
