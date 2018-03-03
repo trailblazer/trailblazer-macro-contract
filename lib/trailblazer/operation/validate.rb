@@ -13,7 +13,7 @@ module Trailblazer
 
         # Build a simple Railway {Activity} for the internal flow.
         activity = Module.new do
-          extend Activity::Railway()
+          extend Activity::Railway(name: "Contract::Validate")
 
           step extract,  id: "#{params_path}_extract" unless skip_extract || representer
           step validate, id: "contract.#{name}.call"
@@ -29,8 +29,7 @@ module Trailblazer
         # Task: extract the contract's input from params by reading `:key`.
         class Extract
           def initialize(key:nil, params_path:nil)
-            @key = key
-            @params_path = params_path
+            @key, @params_path = key, params_path
           end
 
           def call( ctx, params:, ** )
@@ -39,9 +38,7 @@ module Trailblazer
         end
 
         def initialize(name:"default", representer:false, params_path:nil)
-          @name = name
-          @representer = representer
-          @params_path = params_path
+          @name, @representer, @params_path = name, representer, params_path
         end
 
         # Task: Validates contract `:name`.
