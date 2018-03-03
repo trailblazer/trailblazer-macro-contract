@@ -6,7 +6,7 @@ gemspec
 gem "reform-rails"
 gem "activesupport"
 
-gem "trailblazer"
+gem "trailblazer", github: "trailblazer/trailblazer"
 gem "reform"
 gem "multi_json"
 
