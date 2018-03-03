@@ -15,6 +15,7 @@ gem "dry-matcher"
 gem "dry-validation"
 
 gem "trailblazer-operation", github: "trailblazer/trailblazer-operation"
+gem "trailblazer-macro", github: "trailblazer/trailblazer-macro"
 
 gem "minitest-line"
 
