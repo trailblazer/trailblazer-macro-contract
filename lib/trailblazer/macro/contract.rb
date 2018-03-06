@@ -1,4 +1,3 @@
-require "trailblazer"
 require "reform"
 require "trailblazer/macro/contract/version"
 require "trailblazer/operation/contract"
