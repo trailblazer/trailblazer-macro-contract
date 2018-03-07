@@ -413,7 +413,7 @@ class DocContractBuilderTest < Minitest::Spec
       validates :title, presence: true
 
       def current_user?
-        return true if title
+        return true if title && defined?(current_user)
         false
       end
     end
