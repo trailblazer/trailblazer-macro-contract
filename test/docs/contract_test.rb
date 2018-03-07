@@ -67,42 +67,6 @@ class DocsContractOverviewTest < Minitest::Spec
 `-- #<Trailblazer::Operation::Railway::End::Failure semantic=:failure>}
   end
 end
-
-class DocsContractNameTest < Minitest::Spec
-  Song = Struct.new(:length, :title)
-
-  #:contract-name
-  # app/concepts/comment/update.rb
-  class Update < Trailblazer::Operation
-    #~contract
-    extend Contract::DSL
-
-    class MyContract < Reform::Form
-      property :id
-      validates :id,  presence: true
-    end
-    #~contract end
-    #~pipe
-    step Model( Song, :new )
-    step Contract::Build( constant: MyContract, name: "params" )
-    step Contract::Validate( name: "params" )
-    #~pipe end
-  end
-  #:contract-name end
-end
-
-class DocsContractReferenceTest < Minitest::Spec
-  MyContract = Class.new
-  #:contract-ref
-  # app/concepts/comment/update.rb
-  class Update < Trailblazer::Operation
-    #~contract
-    extend Contract::DSL
-    contract :user, MyContract
-  end
-  #:contract-ref end
-end
-
 #---
 # contract MyContract
 class DocsContractExplicitTest < Minitest::Spec
@@ -419,7 +383,7 @@ class DocContractBuilderTest < Minitest::Spec
     end
 
     step Model( Song, :new )
-    step Contract::Build( constant: MyContract )
+    step Contract::Build( constant: MyContract, builder: :default_contract! )
     step Contract::Validate()
     step Contract::Persist( method: :sync )
 
