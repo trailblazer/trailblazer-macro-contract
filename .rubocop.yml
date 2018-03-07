@@ -1,0 +1,6 @@
+inherit_from: .rubocop_todo.yml
+
+Naming/MethodName:
+  Exclude:
+    - 'lib/trailblazer/operation/persist.rb'
+    - 'lib/trailblazer/operation/contract.rb'
