@@ -6,24 +6,18 @@ class DocsContractOverviewTest < Minitest::Spec
   #:overv-reform
   # app/concepts/song/create.rb
   class Create < Trailblazer::Operation
-    #~bla
-    extend ClassDependencies
-    extend Contract::DSL
-
-    contract do
+    #~contractonly
+    class MyContract < Reform::Form
       property :title
-      #~contractonly
       property :length
 
       validates :title,  presence: true
       validates :length, numericality: true
-      #~contractonly end
     end
-    #~contractonly
+    #~contractonly end
 
-    #~bla end
     step Model( Song, :new )
-    step Contract::Build()
+    step Contract::Build(constant: MyContract)
     step Contract::Validate()
     step Contract::Persist( method: :sync )
     #~contractonly end
@@ -43,7 +37,7 @@ class DocsContractOverviewTest < Minitest::Spec
 =end
 
   it do
-    assert Create["contract.default.class"] < Reform::Form
+    assert Create.(params: {})["contract.default"].must_be_instance_of DocsContractOverviewTest::Create::MyContract
   end
 
   #- result
@@ -83,14 +77,14 @@ class DocsContractNameTest < Minitest::Spec
     #~contract
     extend Contract::DSL
 
-    contract :params do
+    class MyContract < Reform::Form
       property :id
       validates :id,  presence: true
     end
     #~contract end
     #~pipe
     step Model( Song, :new )
-    step Contract::Build( name: "params" )
+    step Contract::Build( constant: MyContract, name: "params" )
     step Contract::Validate( name: "params" )
     #~pipe end
   end
@@ -127,12 +121,8 @@ class DocsContractExplicitTest < Minitest::Spec
   #:reform-inline-op
   # app/concepts/comment/create.rb
   class Create < Trailblazer::Operation
-    extend Contract::DSL
-
-    contract MyContract
-
     step Model( Song, :new )
-    step Contract::Build()
+    step Contract::Build(constant: MyContract)
     step Contract::Validate()
     step Contract::Persist( method: :sync )
   end
@@ -144,10 +134,7 @@ class DocsContractSeparateKeyTest < Minitest::Spec
   Song = Struct.new(:id, :title)
   #:key-extr
   class Create < Trailblazer::Operation
-    extend ClassDependencies
-    extend Contract::DSL
-
-    contract do
+    class MyContract < Reform::Form
       property :title
     end
 
@@ -156,7 +143,7 @@ class DocsContractSeparateKeyTest < Minitest::Spec
     end
 
     step Model( Song, :new )
-    step Contract::Build()
+    step Contract::Build(constant: MyContract)
     step :extract_params!
     step Contract::Validate( skip_extract: true )
     step Contract::Persist( method: :sync )
@@ -368,81 +355,47 @@ end
 class DryValidationContractTest < Minitest::Spec
   Song = Struct.new(:id, :title)
   #---
-  # DRY-validation params validation before op,
-  # plus main contract.
+  # DRY-validation with multiple validation sets,
   #- result.path
   #:dry-schema
-  require "dry/validation"
+  require "reform/form/dry"
   class Create < Trailblazer::Operation
-    extend ClassDependencies
-    extend Contract::DSL
-
     # contract to verify params formally.
-    contract "params", (Dry::Validation.Schema do
-      required(:id).filled
-    end)
-    #~form
-    # domain validations.
-    contract "form" do
+    class MyContract < Reform::Form
+      feature Reform::Form::Dry
+      property :id
       property :title
-      validates :title, length: 1..3
+
+      validation name: :default do
+        required(:id).filled
+      end
+
+      validation name: :extra, if: :default do
+        required(:title).filled(min_size?: 2)
+      end
     end
     #~form end
 
-    step Contract::Validate( name: "params" )
-    #~form
-    step Model( Song, :new )                             # create the op's main model.
-    step Contract::Build( name: "form" )                 # create the Reform contract.
-    step Contract::Validate( name: "form" )              # validate the Reform contract.
-    step Contract::Persist( method: :sync, name: "form" ) # persist the contract's data via the model.
+    step Model( Song, :new )                      # create the op's main model.
+    step Contract::Build( constant: MyContract )  # create the Reform contract.
+    step Contract::Validate()                     # validate the Reform contract.
+    step Contract::Persist( method: :sync)        # persist the contract's data via the model.
     #~form end
   end
   #:dry-schema end
 
   puts "@@@@@ #{Trailblazer::Operation::Inspect.(Create, style: :rows)}"
 
-  it { Create.(params: {}).inspect(:model, "result.contract.params").must_equal %{<Result:false [nil, #<Dry::Validation::Result output={} errors={:id=>[\"is missing\"]}>] >} }
-  it { Create.(params: { id: 1 }).inspect(:model, "result.contract.params").must_equal %{<Result:false [#<struct DryValidationContractTest::Song id=nil, title=nil>, #<Dry::Validation::Result output={:id=>1} errors={}>] >} }
-  # it { Create.(params: { id: 1, title: "" }).inspect(:model, "result.contract.form").must_equal %{<Result:false [#<struct DryValidationContractTest::Song id=nil, title=nil>] >} }
+  it { Create.(params: {}).inspect("result.contract.default").must_include "Result:false"}
+  it { Create.(params: {}).inspect("result.contract.default").must_include "@errors={:id=>[\"must be filled\""}
+
+  it { Create.(params: { id: 1 }).inspect(:model, "result.contract.default").must_include "Result:false"}
+  it { Create.(params: { id: 1 }).inspect(:model, "result.contract.default").must_include "@errors={:title=>[\"must be filled\", \"size cannot be less than 2\"]}"}
+  it { Create.(params: { id: 1 }).inspect(:model, "result.contract.default").wont_include ":id=>[\"must be filled\""}
+
   it { Create.(params: { id: 1, title: "" }).inspect(:model).must_equal %{<Result:false [#<struct DryValidationContractTest::Song id=nil, title=nil>] >} }
-  it { Create.(params: { id: 1, title: "Yo" }).inspect(:model).must_equal %{<Result:true [#<struct DryValidationContractTest::Song id=nil, title="Yo">] >} }
-
-  #:dry-schema-first
-  require "dry/validation"
-  class Delete < Trailblazer::Operation
-    extend ClassDependencies
-    extend Contract::DSL
-
-    contract "params", (Dry::Validation.Schema do
-      required(:id).filled
-    end)
-
-    step Contract::Validate( name: "params" ) #, prepend: true
-    #~more
-    #~more end
-  end
-  #:dry-schema-first end
-end
-
-class DryExplicitSchemaTest < Minitest::Spec
-  #:dry-schema-explsch
-  # app/concepts/comment/contract/params.rb
-  require "dry/validation"
-  MySchema = Dry::Validation.Schema do
-    required(:id).filled
-  end
-  #:dry-schema-explsch end
-
-  #:dry-schema-expl
-  # app/concepts/comment/delete.rb
-  class Delete < Trailblazer::Operation
-    extend ClassDependencies
-    extend Contract::DSL
-    contract "params", MySchema
-
-    step Contract::Validate( name: "params" ) #, prepend: true
-  end
-  #:dry-schema-expl end
+  it { Create.(params: { id: 1, title: "Y" }).inspect(:model).must_equal %{<Result:false [#<struct DryValidationContractTest::Song id=nil, title=nil>] >} }
+  it { Create.(params: { id: 1, title: "Yo" }).inspect(:model).must_equal %{<Result:true [#<struct DryValidationContractTest::Song id=1, title="Yo">] >} }
 end
 
 class DocContractBuilderTest < Minitest::Spec
@@ -451,17 +404,22 @@ class DocContractBuilderTest < Minitest::Spec
   #- builder:
   #:builder-option
   class Create < Trailblazer::Operation
-    extend ClassDependencies
-    extend Contract::DSL
 
-    contract do
+    class MyContract < Reform::Form
       property :title
       property :current_user, virtual: true
-      validates :current_user, presence: true
+
+      validate :current_user?
+      validates :title, presence: true
+
+      def current_user?
+        return true if title
+        false
+      end
     end
 
     step Model( Song, :new )
-    step Contract::Build( builder: :default_contract! )
+    step Contract::Build( constant: MyContract )
     step Contract::Validate()
     step Contract::Persist( method: :sync )
 
@@ -472,31 +430,7 @@ class DocContractBuilderTest < Minitest::Spec
   #:builder-option end
 
   it { Create.(params: {}).inspect(:model).must_equal %{<Result:false [#<struct DocContractBuilderTest::Song id=nil, title=nil>] >} }
-  it { Create.(params: { title: 1}, :current_user => Module).inspect(:model).must_equal %{<Result:true [#<struct DocContractBuilderTest::Song id=nil, title=1>] >} }
-
-  #- proc
-  class Update < Trailblazer::Operation
-    extend ClassDependencies
-    extend Contract::DSL
-
-    contract do
-      property :title
-      property :current_user, virtual: true
-      validates :current_user, presence: true
-    end
-
-    step Model( Song, :new )
-    #:builder-proc
-    step Contract::Build( builder: ->(options, constant:raise, model:raise, **) {
-      constant.new(model, current_user: options[:current_user])
-    })
-    #:builder-proc end
-    step Contract::Validate()
-    step Contract::Persist( method: :sync )
-  end
-
-  it { Update.(params: {}).inspect(:model).must_equal %{<Result:false [#<struct DocContractBuilderTest::Song id=nil, title=nil>] >} }
-  it { Update.(params: { title: 1}, :current_user => Module).inspect(:model).must_equal %{<Result:true [#<struct DocContractBuilderTest::Song id=nil, title=1>] >} }
+  it { Create.(params: { title: "title"}, current_user: Module).inspect(:model).must_equal %{<Result:true [#<struct DocContractBuilderTest::Song id=nil, title="title">] >} }
 end
 
 class DocContractTest < Minitest::Spec
@@ -504,14 +438,12 @@ class DocContractTest < Minitest::Spec
   #---
   # with contract block, and inheritance, the old way.
   class Block < Trailblazer::Operation
-    extend ClassDependencies
-    extend Contract::DSL
-    contract do
+    class MyContract < Reform::Form
       property :title
     end
 
     step Model( Song, :new )
-    step Contract::Build()            # resolves to "contract.class.default" and is resolved at runtime.
+    step Contract::Build(constant: MyContract)            # resolves to "contract.class.default" and is resolved at runtime.
     step Contract::Validate()
     step Contract::Persist( method: :sync )
   end
@@ -520,9 +452,11 @@ class DocContractTest < Minitest::Spec
   it { Block.(params: { id:1, title: "Fame" }).inspect(:model).must_equal %{<Result:true [#<struct DocContractTest::Song id=nil, title="Fame">] >} }
 
   class Breach < Block
-    contract do
+    class MyContract < MyContract
       property :id
     end
+
+    step Contract::Build(constant: MyContract), replace: "contract.build"
   end
 
   it { Breach.(params: { id:1, title: "Fame" }).inspect(:model).must_equal %{<Result:true [#<struct DocContractTest::Song id=1, title="Fame">] >} }
@@ -534,12 +468,8 @@ class DocContractTest < Minitest::Spec
       property :id
     end
     # override the original block as if it's never been there.
-    contract MyContract
+    step Contract::Build(constant: MyContract), replace: "contract.build"
   end
 
   it { Break.(params: { id:1, title: "Fame" }).inspect(:model).must_equal %{<Result:true [#<struct DocContractTest::Song id=1, title=nil>] >} }
 end
-
-
-
-

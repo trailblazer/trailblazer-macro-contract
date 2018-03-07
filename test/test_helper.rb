@@ -1,4 +1,6 @@
 require "pp"
+require 'delegate'
+require "trailblazer"
 require "trailblazer/macro/contract"
 require "minitest/autorun"
 
