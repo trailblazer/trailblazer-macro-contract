@@ -278,7 +278,7 @@ class DslContractTest < MiniTest::Spec
       step Trailblazer::Operation::Contract::Build(constant: MyContract, name: "params")
     end
 
-    it { Unfollow.call(params: {})["contract.params"].must_be_instance_of Unfollow::MyContract }
+    it { Unfollow.(params: {})["contract.params"].must_be_instance_of Unfollow::MyContract }
   end
 
   # multiple ::contract calls.
