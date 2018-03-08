@@ -1,19 +1,26 @@
 # Trailblazer Macro Contract
-The Contract macros helps you defining contracts and assists with instantiating and validating data with those contracts at runtime.
+The Contract Macros helps you defining contracts and assists with instantiating and validating data with those contracts at runtime.
+
+## Table of Contents
+* [Installation](#installation)
+* [Contract](#contract)
+  + [Build](#build)
+  + [Validation](#validation)
+    - [Key](#key)
+  + [Persist](#persist)
+    - [Name](#name)
+  + [Result Object](#result-object)
 
 ## Installation
-
 The obvious needs to be in your `Gemfile`.
-
 ```ruby
-gem "trailblazer"
-gem "trailblazer-rails" # if you are in rails.
+gem "trailblazer-operation"
 gem "reform"
-gem "reform-rails"      # if you are in rails.
 gem "trailblazer-macro-contract"
 ```
+Note: you don't need to install anything if you're using the trailblazer gem itself.
 
-### Contract
+## Contract
 The Contract Macro, covers the contracts for Trailblazer, they are basically Reform objects that you can define and validate inside an operation. Reform is a fantastic tool for deserializing and validating deeply nested hashes, and then, when valid, writing those to the database using your persistence layer such as ActiveRecord.
 
 ```ruby
@@ -55,7 +62,7 @@ result["contract.default"].errors.messages
   #=> {:title=>["is too short (minimum is 2 characters)"], :length=>["is not a number"]}
 ```
 
-#### Build
+### Build
 The Contract::Build macro helps you to instantiate the contract. It is both helpful for a complete workflow, or to create the contract, only, without validating it, e.g. when presenting the form.
 ```ruby
 class Song::New < Trailblazer::Operation
@@ -73,7 +80,7 @@ result["contract.default"]
 ```
 The Build macro accepts the :name option to change the name from default.
 
-#### Validation
+### Validation
 The Contract::Validate macro is responsible for validating the incoming params against its contract. That means you have to use Contract::Build beforehand, or create the contract yourself. The macro will then grab the params and throw then into the contract’s validate (or call) method.
 
 ```ruby
@@ -104,7 +111,7 @@ Internally, this macro will simply call Form#validate on the Reform object.
 
 Note: Reform comes with sophisticated deserialization semantics for nested forms, it might be worth reading a bit about Reform to fully understand what you can do in the Validate step.
 
-##### Key 
+#### Key
 Per default, Contract::Validate will use options["params"] as the data to be validated. Use the key: option if you want to validate a nested hash from the original params structure.
 ```ruby
 class Song::Create < Trailblazer::Operation
@@ -129,7 +136,7 @@ result.success? #=> false
 
 Note: String vs. symbol do matter here since the operation will simply do a hash lookup using the key you provided.
 
-#### Persist
+### Persist
 To push validated data from the contract to the model(s), use Persist. Like Validate, this requires a contract to be set up beforehand.
 ```ruby
 class Song::Create < Trailblazer::Operation
@@ -153,7 +160,7 @@ step Persist( method: :sync )
 ```
 This will only write the contract’s data to the model without calling save on it.
 
-##### Name
+#### Name
 Explicit naming for the contract is possible, too.
 ```ruby
 
@@ -173,7 +180,7 @@ result["contract.form"].errors.messages #=> {:title=>["is too short (minimum is 
 
 Use this if your operation has multiple contracts.
 
-#### Result Object
+### Result Object
 The operation will store the validation result for every contract in its own result object.
 
 The path is result.contract.#{name}.
@@ -186,4 +193,3 @@ result["result.contract.default"].errors.messages #=> {:length=>["is not a numbe
 ```
 
 Each result object responds to success?, failure?, and errors, which is an Errors object. TODO: design/document Errors. WE ARE CURRENTLY WORKING ON A UNIFIED API FOR ERRORS (FOR DRY AND REFORM).
-
