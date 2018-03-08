@@ -236,15 +236,19 @@ class DslContractTest < MiniTest::Spec
     # this operation copies DifferentSongForm and shouldn't have `genre`.
     it do
       contract = OpNotExtendingContract.(params: {"songTitle"=>"Monsterparty", "genre"=>"Punk"})["contract.default"]
-      contract.songTitle.must_equal "Monsterparty"
-      assert_raises(NoMethodError) { contract.genre }
+
+      song = contract.sync
+      song.songTitle.must_equal "Monsterparty"
+      song.songGenre.must_be_nil
     end
 
     # this operation copies DifferentSongForm and extends it with the property `genre`.
     it do
       contract = OpExtendingContract.(params: {"songTitle"=>"Monsterparty", "genre"=>"Punk"})["contract.default"]
-      contract.songTitle.must_equal "Monsterparty"
-      contract.genre.must_equal "Punk"
+
+      song = contract.sync
+      song.songTitle.must_equal "Monsterparty"
+      song.genre.must_equal "Punk"
     end
 
     # of course, the original contract wasn't modified, either.
