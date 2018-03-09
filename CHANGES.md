@@ -1,4 +1,9 @@
-# 2.1.0.beta3
+# 2.1.0.beta2
+
+* Remove `trailblazer` dependency.
+
+# 2.1.0.beta1
+
 Split all Trailblazer Operation based Contract Macros into separate gem
 
 # 2.0.2
