@@ -7,8 +7,8 @@ Gem::Specification.new do |spec|
   spec.version       = Trailblazer::Macro::Contract::VERSION
   spec.authors       = ["Nick Sutterer"]
   spec.email         = ["apotonick@gmail.com"]
-  spec.description   = 'Trailblazer Operation Macros for Reform Contracts'
-  spec.summary       = 'Traiblazer Macros for Form Contracts based on Reform'
+  spec.description   = 'Trailblazer operation macros to integrate Reform'
+  spec.summary       = 'Trailblazer operation macros to integrate Reform forms and DRY.rb schemas.'
   spec.homepage      = "http://trailblazer.to"
   spec.license       = "LGPL-3.0"
 
