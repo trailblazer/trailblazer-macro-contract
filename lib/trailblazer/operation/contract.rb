@@ -5,7 +5,7 @@ module Trailblazer
         task = lambda do |(options, flow_options), **circuit_options|
           result = Build.(options, circuit_options, name: name, constant: constant, builder: builder)
 
-          return Activity::TaskBuilder::Binary.binary_direction_for( result, Activity::Right, Activity::Left ),
+          return Activity::TaskBuilder.binary_signal_for( result, Activity::Right, Activity::Left ),
               [options, flow_options]
         end
 
