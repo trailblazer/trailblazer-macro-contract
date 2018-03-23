@@ -1,3 +1,7 @@
+# 2.1.0.beta3
+
+* New activity API update.
+
 # 2.1.0.beta2
 
 * Remove `trailblazer` dependency.
