@@ -1,5 +1,6 @@
 require "reform"
 require "trailblazer/macro/contract/version"
+require "trailblazer/operation/dry_schema"
 require "trailblazer/operation/contract"
 require "trailblazer/operation/validate"
 require "trailblazer/operation/persist"
