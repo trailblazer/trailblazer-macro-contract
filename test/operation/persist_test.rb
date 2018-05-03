@@ -31,7 +31,7 @@ class PersistTest < Minitest::Spec
   # failure
   it do
     result = Create.(params: { title: "Fail!" })
-    result[:model].saved.must_be_nil
+    assert_nil result[:model].saved
     result[:model].title.must_equal "Fail!"
     result["2. fail"].must_equal "Persist"
     result.success?.must_equal false
@@ -42,7 +42,7 @@ class PersistTest < Minitest::Spec
   class Update < Create
   end
 
-  it { Operation::Inspect.( Update ).must_equal %{[>model.build,>contract.build,>contract.default.validate,<<PersistTest::Create::Fail1,>persist.save,<<PersistTest::Create::Fail2]} }
+  it { Trailblazer::Operation::Inspect.( Update ).must_equal %{[>model.build,>contract.build,>contract.default.validate,<<PersistTest::Create::Fail1,>persist.save,<<PersistTest::Create::Fail2]} }
 
   #---
   it do
