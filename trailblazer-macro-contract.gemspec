@@ -19,7 +19,7 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency "declarative"
   spec.add_dependency "reform", ">= 2.2.0", "< 3.0.0"
-  spec.add_dependency "trailblazer-operation", ">= 0.2.4", "< 0.3.0"
+  spec.add_dependency "trailblazer-operation", ">= 0.3.0", "< 0.4.0"
 
   spec.add_development_dependency "bundler"
   spec.add_development_dependency "trailblazer-macro", ">= 2.1.0.beta2", "< 2.2.0"
