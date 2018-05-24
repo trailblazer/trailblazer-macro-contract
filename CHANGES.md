@@ -1,3 +1,12 @@
+# 2.1.0.rc1
+
+* Add a separate End to Validate. When the key extraction fails, the Validate activity will
+end in a new end End.extract_failure.
+This end is, per default, connected to the outer failure track, exposing the exact same
+behavior it did before, but is now deviatable in the outer "real" operation to a separate
+flow.
+
+
 # 2.1.0.beta4
 
 * New activity API update.
