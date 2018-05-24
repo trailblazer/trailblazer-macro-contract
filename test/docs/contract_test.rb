@@ -257,6 +257,46 @@ class DocsContractKeyTest < Minitest::Spec
   end
 end
 
+#---
+#- Validate( key: :song ), Output(:extract_failure) => End(:my_new_end)
+class DocsContractKeyWithOutputTest < Minitest::Spec
+  Song = Class.new(ContractConstantTest::Song)
+
+  module Song::Contract
+    Create = ContractConstantTest::Song::Contract::Create
+  end
+
+  #:key-output
+  class Song::Create < Trailblazer::Operation
+    step Model( Song, :new )
+    step Contract::Build( constant: Song::Contract::Create )
+    step Contract::Validate( key: "song" ), Output(:extract_failure) => End(:key_not_found)
+    step Contract::Persist( )
+  end
+  #:key-output end
+
+  it do
+    result = Song::Create.(params: {})
+
+    result.event.inspect.must_equal %{#<Trailblazer::Activity::End semantic=:key_not_found>}
+    result.inspect(:model, "result.contract.default.extract").must_equal %{<Result:false [#<struct DocsContractKeyWithOutputTest::Song title=nil, length=nil>, nil] >}
+  end
+
+  it { Song::Create.(params: {"song" => { title: "SVG", length: 13 }}).inspect(:model).must_equal %{<Result:true [#<struct DocsContractKeyWithOutputTest::Song title=\"SVG\", length=13>] >} }
+  it do
+    #:key-output-res
+    result = Song::Create.(params: { "song" => { title: "Rising Force", length: 13 } })
+    result.success? #=> true
+    #:key-output-res end
+
+    #:key-output-res-false
+    result = Song::Create.(params: { title: "Rising Force", length: 13 })
+    result.success? #=> false
+    result.event    #=> #<Trailblazer::Activity::End semantic=:key_not_found>
+    #:key-output-res-false end
+  end
+end
+
 #- Contract::Build[ constant: XXX, name: AAA ]
 class ContractNamedConstantTest < Minitest::Spec
   Song = Class.new(ContractConstantTest::Song)

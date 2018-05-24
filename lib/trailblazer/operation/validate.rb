@@ -15,14 +15,16 @@ module Trailblazer
         activity = Module.new do
           extend Activity::Railway(name: "Contract::Validate")
 
-          step extract,  id: "#{params_path}_extract" unless skip_extract || representer
+          step extract,  id: "#{params_path}_extract", Activity::DSL.Output(:failure) => Activity::DSL.End(:extract_failure) unless skip_extract || representer
           step validate, id: "contract.#{name}.call"
         end
 
-        # activity, _ = activity.decompose
+        options = { task: activity, id: "contract.#{name}.validate", outputs: activity.outputs}
 
-        # DISCUSS: use Nested here?
-        { task: activity, id: "contract.#{name}.validate", outputs: activity.outputs }
+        # Deviate End.extract_failure to the standard failure track as a default. This can be changed from the user side.
+        options = options.merge(Activity::DSL.Output(:extract_failure) => Activity::DSL.Track(:failure)) unless skip_extract
+
+        options
       end
 
       class Validate
