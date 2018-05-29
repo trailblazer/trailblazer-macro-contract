@@ -361,6 +361,29 @@ class DryValidationContractTest < Minitest::Spec
   it { Create.(params: { id: 1, title: "" }).inspect(:model).must_equal %{<Result:false [#<struct DryValidationContractTest::Song id=nil, title=nil>] >} }
   it { Create.(params: { id: 1, title: "Y" }).inspect(:model).must_equal %{<Result:false [#<struct DryValidationContractTest::Song id=nil, title=nil>] >} }
   it { Create.(params: { id: 1, title: "Yo" }).inspect(:model).must_equal %{<Result:true [#<struct DryValidationContractTest::Song id=1, title="Yo">] >} }
+
+  #---
+  # Contract::Validate(constant: DrySchema)
+  class OpWithSchema < Trailblazer::Operation
+    Schema = Dry::Validation.Schema do
+      required(:title).filled
+    end
+
+    step Model( Song, :new ) # FIXME.
+    step Contract::Validate( constant: Schema, key: :song) # generic validate call for you.
+  end
+
+  # success
+  it { OpWithSchema.(params: {song: { title: "SVG" }}).success?.must_equal true }
+  # failure
+  it { OpWithSchema.(params: {song: { title: nil }}).success?.must_equal false }
+  it "shows error messages" do
+    result = OpWithSchema.(params: {song: { title: nil }})
+
+    result["result.contract.default"].errors.must_equal(title: ["must be filled"])
+  end
+  # key not found
+  it { OpWithSchema.(params: {}).success?.must_equal false }
 end
 
 class DocContractBuilderTest < Minitest::Spec
