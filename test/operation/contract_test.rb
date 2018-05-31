@@ -1,4 +1,5 @@
 require "test_helper"
+require "dry/validation"
 
 class ContractTest < Minitest::Spec
   Song = Struct.new(:title)
