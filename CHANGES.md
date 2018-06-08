@@ -5,7 +5,8 @@ end in a new end End.extract_failure.
 This end is, per default, connected to the outer failure track, exposing the exact same
 behavior it did before, but is now deviatable in the outer "real" operation to a separate
 flow.
-
+* Add `Validate( constant: MySchema )` to allow using `Dry::Schema` without the need for `Contract::Build()`.
+This replaces a hack that used `contract MySchema` to achieve the same.
 
 # 2.1.0.beta4
 
