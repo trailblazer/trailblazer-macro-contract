@@ -7,6 +7,7 @@ behavior it did before, but is now deviatable in the outer "real" operation to a
 flow.
 * Add `Validate( constant: MySchema )` to allow using `Dry::Schema` without the need for `Contract::Build()`.
 This replaces a hack that used `contract MySchema` to achieve the same.
+* Change back to MIT license.
 
 # 2.1.0.beta4
 
