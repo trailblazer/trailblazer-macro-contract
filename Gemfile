@@ -4,7 +4,6 @@ gemspec
 
 gem "dry-auto_inject"
 gem "dry-matcher"
-gem "dry-validation"
 
 if ENV['USE_LOCAL_GEMS']
   gem "reform", path: "../reform"
@@ -14,7 +13,8 @@ if ENV['USE_LOCAL_GEMS']
   gem "trailblazer-activity", path: "../trailblazer-activity"
   gem "trailblazer-context", path: "../trailblazer-context"
 else
-  gem "reform"
+  gem "reform", '~> 2.3.0.rc1'
+  gem "trailblazer-operation"
 end
 
 # gem "trailblazer-operation", github: "trailblazer/trailblazer-operation"

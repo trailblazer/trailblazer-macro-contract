@@ -392,10 +392,10 @@ class DryValidationContractTest < Minitest::Spec
   puts "@@@@@ #{Trailblazer::Operation::Inspect.(Create, style: :rows)}"
 
   it { Create.(params: {}).inspect("result.contract.default").must_include "Result:false"}
-  it { Create.(params: {}).inspect("result.contract.default").must_include "@errors={:id=>[\"must be filled\""}
+  it { Create.(params: {}).inspect("result.contract.default").must_include "errors={:id=>[\"must be filled\""}
 
   it { Create.(params: { id: 1 }).inspect(:model, "result.contract.default").must_include "Result:false"}
-  it { Create.(params: { id: 1 }).inspect(:model, "result.contract.default").must_include "@errors={:title=>[\"must be filled\", \"size cannot be less than 2\"]}"}
+  it { Create.(params: { id: 1 }).inspect(:model, "result.contract.default").must_include "errors={:title=>[\"must be filled\", \"size cannot be less than 2\"]}"}
   it { Create.(params: { id: 1 }).inspect(:model, "result.contract.default").wont_include ":id=>[\"must be filled\""}
 
   it { Create.(params: { id: 1, title: "" }).inspect(:model).must_equal %{<Result:false [#<struct DryValidationContractTest::Song id=nil, title=nil>] >} }
