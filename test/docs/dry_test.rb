@@ -19,13 +19,13 @@ class DryContainerTest < Minitest::Spec
   #- dependency injection
   #- with Dry-container
   class Create < Trailblazer::Operation
-    step Model( Song, :new )
+    step Model(Song, :new)
     step Contract::Build()
     step Contract::Validate()
-    step Contract::Persist( method: :sync )
+    step Contract::Persist(method: :sync)
   end
   #:key end
 
-  it { Create.({ params: { title: "A" } }, my_container).inspect(:model).must_equal %{<Result:false [#<struct DryContainerTest::Song id=nil, title=nil>] >} }
-  it { Create.({ params: { title: "Anthony's Song" } }, my_container).inspect(:model).must_equal %{<Result:true [#<struct DryContainerTest::Song id=nil, title="Anthony's Song">] >} }
+  it { Create.({params: {title: "A" } }, my_container).inspect(:model).must_equal %{<Result:false [#<struct DryContainerTest::Song id=nil, title=nil>] >} }
+  it { Create.({params: {title: "Anthony's Song" } }, my_container).inspect(:model).must_equal %{<Result:true [#<struct DryContainerTest::Song id=nil, title="Anthony's Song">] >} }
 end
