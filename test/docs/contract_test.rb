@@ -500,4 +500,39 @@ class DocContractTest < Minitest::Spec
   end
 
   it { Break.(params: { id:1, title: "Fame" }).inspect(:model).must_equal %{<Result:true [#<struct DocContractTest::Song id=1, title=nil>] >} }
+
+  # Contract::Persist fails to a different end event
+  class PersistFailureTest < Minitest::Spec
+    Song = Struct.new(:title) do
+      def save
+        false
+      end
+    end
+
+    module Song::Contract
+      class Create < Reform::Form
+        property :title
+
+        validates :title,  presence: true
+      end
+    end
+
+    class Song::Create < Trailblazer::Operation
+      step Model( Song, :new )
+      step Contract::Build( constant: Song::Contract::Create )
+      step Contract::Validate()
+      step Contract::Persist(), Output(:persist_failure) => End(:save_failed)
+    end
+
+    it do
+      Song::Create.(params: { title: "A" }).inspect(:model)
+        .must_equal %{<Result:false [#<struct DocContractTest::PersistFailureTest::Song title=\"A\">] >}
+    end
+
+    it do
+      result = Song::Create.(params: { title: "A" })
+      assert result["contract.default"].errors.empty?
+      assert_equal "#<Trailblazer::Activity::End semantic=:save_failed>", result.event.inspect
+    end
+  end
 end

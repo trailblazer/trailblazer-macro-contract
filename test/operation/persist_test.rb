@@ -2,7 +2,9 @@ require "test_helper"
 
 class PersistTest < Minitest::Spec
   Song = Struct.new(:title, :saved) do
-    def save; title=="Fail!" ? false : self.saved = true; end
+    def save
+      title == "Fail!" ? false : self.saved = true
+    end
   end
 
   class Create < Trailblazer::Operation
@@ -42,7 +44,10 @@ class PersistTest < Minitest::Spec
   class Update < Create
   end
 
-  it { Trailblazer::Operation::Inspect.( Update ).must_equal %{[>model.build,>contract.build,>contract.default.validate,<<PersistTest::Create::Fail1,>persist.save,<<PersistTest::Create::Fail2]} }
+  it do
+    Trailblazer::Operation::Inspect.( Update )
+      .must_equal %{[>model.build,>contract.build,>contract.default.validate,<<PersistTest::Create::Fail1,>contract.default.persist,<<PersistTest::Create::Fail2]}
+  end
 
   #---
   it do

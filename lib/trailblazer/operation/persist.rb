@@ -3,11 +3,19 @@ module Trailblazer
     module Contract
       def self.Persist(method: :save, name: "default")
         path = "contract.#{name}"
-        step = ->(options, **) { options[path].send(method) }
+        persist = ->(options, **) { options[path].send(method) }
 
-        task = Activity::TaskBuilder::Binary(step)
+        activity = Module.new do
+          extend Activity::Railway(name: "Contract::Persist")
 
-        {task: task, id: "persist.save"}
+          step persist, id: "persist.#{method}", Activity::DSL.Output(:failure) => Activity::DSL.End(:persist_failure)
+        end
+
+        options = {task: activity, id: "contract.#{name}.persist", outputs: activity.outputs}
+
+        options = options.merge(Activity::DSL.Output(:persist_failure) => Activity::DSL.Track(:failure))
+
+        options
       end
     end
   end

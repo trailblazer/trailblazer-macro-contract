@@ -70,14 +70,14 @@ class ContractTest < Minitest::Spec
     class New < Upsert
     end
 
-    it { Trailblazer::Operation::Inspect.(New).must_equal %{[>model.build,>contract.build,>contract.default.validate,>persist.save]} }
+    it { Trailblazer::Operation::Inspect.(New).must_equal %{[>model.build,>contract.build,>contract.default.validate,>contract.default.persist]} }
 
     #- overwriting Validate
     class NewHit < Upsert
       step Contract::Validate( key: :hit ), override: true
     end
 
-    it { Trailblazer::Operation::Inspect.(NewHit).must_equal %{[>model.build,>contract.build,>contract.default.validate,>persist.save]} }
+    it { Trailblazer::Operation::Inspect.(NewHit).must_equal %{[>model.build,>contract.build,>contract.default.validate,>contract.default.persist]} }
     it { NewHit.(params: {:hit => { title: "Hooray For Me" }}).inspect(:model).must_equal %{<Result:true [#<struct ContractTest::Song title=\"Hooray For Me\">] >} }
   end
 end
