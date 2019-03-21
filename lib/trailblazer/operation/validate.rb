@@ -12,17 +12,16 @@ module Trailblazer
         validate = Validate.new(name: name, representer: representer, params_path: params_path, constant: constant).freeze
 
         # Build a simple Railway {Activity} for the internal flow.
-        activity = Module.new do
-          extend Activity::Railway(name: "Contract::Validate")
-
-          step extract, id: "#{params_path}_extract", Activity::DSL.Output(:failure) => Activity::DSL.End(:extract_failure) unless skip_extract || representer
+        activity = Class.new(Activity::Railway(name: "Contract::Validate")) do
+          step extract,  id: "#{params_path}_extract", Output(:failure) => End(:extract_failure) unless skip_extract# || representer
           step validate, id: "contract.#{name}.call"
         end
 
-        options = {task: activity, id: "contract.#{name}.validate", outputs: activity.outputs}
+        options = activity.Subprocess(activity)
+        options = options.merge(id: "contract.#{name}.validate")
 
         # Deviate End.extract_failure to the standard failure track as a default. This can be changed from the user side.
-        options = options.merge(Activity::DSL.Output(:extract_failure) => Activity::DSL.Track(:failure)) unless skip_extract
+        options = options.merge(activity.Output(:extract_failure) => activity.Track(:failure)) unless skip_extract
 
         options
       end
