@@ -22,7 +22,7 @@ module Trailblazer
         options = {task: activity, id: "contract.#{name}.validate", outputs: activity.outputs}
 
         # Deviate End.extract_failure to the standard failure track as a default. This can be changed from the user side.
-        options = options.merge(Activity::DSL.Output(:extract_failure) => Activity::DSL.Track(:failure)) unless skip_extract
+        options = options.merge(Activity::DSL.Output(:extract_failure) => Activity::DSL.Track(:failure)) unless skip_extract || representer
 
         options
       end
