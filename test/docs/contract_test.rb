@@ -57,15 +57,15 @@ class DocsContractOverviewTest < Minitest::Spec
   it "shows 2-level tracing" do
     result = Create.trace( params: { length: "A" } )
     result.wtf.gsub(/0x\w+/, "").must_equal %{`-- DocsContractOverviewTest::Create
-    |-- Start.default
-    |-- model.build
-    |-- contract.build
-    |-- contract.default.validate
-    |   |-- Start.default
-    |   |-- contract.default.params_extract
-    |   |-- contract.default.call
-    |   `-- End.failure
-    `-- End.failure}
+   |-- Start.default
+   |-- model.build
+   |-- contract.build
+   |-- contract.default.validate
+   |   |-- Start.default
+   |   |-- contract.default.params_extract
+   |   |-- contract.default.call
+   |   `-- End.failure
+   `-- End.failure}
   end
 end
 #---
