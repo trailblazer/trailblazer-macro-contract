@@ -19,6 +19,8 @@ class DryContainerTest < Minitest::Spec
   #- dependency injection
   #- with Dry-container
   class Create < Trailblazer::Operation
+    extend Trailblazer::Operation::Container
+
     step Model(Song, :new)
     step Contract::Build()
     step Contract::Validate()
