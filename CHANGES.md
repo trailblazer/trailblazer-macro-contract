@@ -1,3 +1,7 @@
+# 2.1.0.rc11
+
+* Use `>= activity-0.8`.
+
 # 2.1.0.rc1
 
 * Add a separate End to Validate. When the key extraction fails, the Validate activity will
