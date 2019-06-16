@@ -4,7 +4,7 @@ require 'trailblazer/macro/contract/version'
 
 Gem::Specification.new do |spec|
   spec.name          = "trailblazer-macro-contract"
-  spec.version       = Trailblazer::Macro::Contract::VERSION
+  spec.version       = Trailblazer::Version::Macro::Contract::VERSION
   spec.authors       = ["Nick Sutterer"]
   spec.email         = ["apotonick@gmail.com"]
   spec.description   = 'Trailblazer operation form object specific macros'
