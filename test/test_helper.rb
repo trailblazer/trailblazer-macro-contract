@@ -2,6 +2,7 @@ require "pp"
 require 'delegate'
 require "trailblazer/macro"
 require "trailblazer-macro-contract"
+require "trailblazer/developer/render/linear"
 require "minitest/autorun"
 
 # TODO: convert tests to non-rails.

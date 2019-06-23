@@ -24,7 +24,7 @@ class DocsContractOverviewTest < Minitest::Spec
   end
   #:overv-reform end
 
-  puts Trailblazer::Operation::Inspect.(Create, style: :rows)
+  puts Trailblazer::Developer.railway(Create, style: :rows)
 
 =begin
   #:overv-reform-pipe
@@ -389,7 +389,7 @@ class DryValidationContractTest < Minitest::Spec
   end
   #:dry-schema end
 
-  puts "@@@@@ #{Trailblazer::Operation::Inspect.(Create, style: :rows)}"
+  puts "@@@@@ #{Trailblazer::Developer.railway(Create, style: :rows)}"
 
   it { Create.(params: {}).inspect(:"result.contract.default").must_include "Result:false"}
   it { Create.(params: {}).inspect(:"result.contract.default").must_include "errors={:id=>[\"must be filled\""}
