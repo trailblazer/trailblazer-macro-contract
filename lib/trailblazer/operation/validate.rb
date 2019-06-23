@@ -6,7 +6,7 @@ module Trailblazer
       # Deviate to left track if optional key is not found in params.
       # Deviate to left if validation result falsey.
       def self.Validate(skip_extract: false, name: "default", representer: false, key: nil, constant: nil) # DISCUSS: should we introduce something like Validate::Deserializer?
-        params_path = "contract.#{name}.params" # extract_params! save extracted params here.
+        params_path = :"contract.#{name}.params" # extract_params! save extracted params here.
 
         extract  = Validate::Extract.new(key: key, params_path: params_path).freeze
         validate = Validate.new(name: name, representer: representer, params_path: params_path, constant: constant).freeze
@@ -52,11 +52,11 @@ module Trailblazer
         end
 
         def validate!(options, representer: false, from: :document, params_path: nil)
-          path     = "contract.#{@name}"
+          path     = :"contract.#{@name}"
           contract = @constant || options[path]
 
           # this is for 1.1-style compatibility and should be removed once we have Deserializer in place:
-          options["result.#{path}"] = result =
+          options[:"result.#{path}"] = result =
             if representer
               # use :document as the body and let the representer deserialize to the contract.
               # this will be simplified once we have Deserializer.

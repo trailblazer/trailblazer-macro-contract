@@ -26,16 +26,16 @@ class ContractTest < Minitest::Spec
     it do
       result = Update.(params: {title: "SVG"})
       result.success?.must_equal true
-      result["result.contract.default"].success?.must_equal true
-      result["result.contract.default"].errors.messages.must_equal({})
+      result[:"result.contract.default"].success?.must_equal true
+      result[:"result.contract.default"].errors.messages.must_equal({})
     end
 
     # failure
     it do
       result = Update.(params: {title: nil})
       result.success?.must_equal false
-      result["result.contract.default"].success?.must_equal false
-      result["result.contract.default"].errors.messages.must_equal({:title=>["can't be blank"]})
+      result[:"result.contract.default"].success?.must_equal false
+      result[:"result.contract.default"].errors.messages.must_equal({:title=>["can't be blank"]})
     end
 
     #---
@@ -63,7 +63,7 @@ class ContractTest < Minitest::Spec
     #---
     # contract.default.params gets set (TODO: change in 2.1)
     it { Upsert.( params: {song: { title: "SVG" }})[:params].must_equal({:song=>{:title=>"SVG"}} ) }
-    it { Upsert.( params: {song: { title: "SVG" }})["contract.default.params"].must_equal({:title=>"SVG"} ) }
+    it { Upsert.( params: {song: { title: "SVG" }})[:"contract.default.params"].must_equal({:title=>"SVG"} ) }
 
     #---
     #- inheritance

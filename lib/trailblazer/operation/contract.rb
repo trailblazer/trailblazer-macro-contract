@@ -16,9 +16,9 @@ module Trailblazer
         # Build contract at runtime.
         def self.call(options, circuit_options, name: "default", constant: nil, builder: nil)
           # TODO: we could probably clean this up a bit at some point.
-          contract_class = constant || options["contract.#{name}.class"] # DISCUSS: Injection possible here?
+          contract_class = constant || options[:"contract.#{name}.class"] # DISCUSS: Injection possible here?
           model          = options[:model]
-          name           = "contract.#{name}"
+          name           = :"contract.#{name}"
 
           options[name] = if builder
                             call_builder(options, circuit_options, builder: builder, constant: contract_class, name: name)
