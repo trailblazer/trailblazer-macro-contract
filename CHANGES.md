@@ -1,3 +1,7 @@
+# 2.1.0.rc12
+
+* Dependencies updated.
+
 # 2.1.0.rc11
 
 * Use `>= activity-0.8`.
