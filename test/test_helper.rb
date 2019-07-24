@@ -1,5 +1,6 @@
 require "pp"
 require 'delegate'
+require "trailblazer/developer"
 require "trailblazer/macro"
 require "trailblazer-macro-contract"
 require "trailblazer/developer/render/linear"
