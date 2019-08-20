@@ -42,7 +42,7 @@ class PersistTest < Minitest::Spec
   class Update < Create
   end
 
-  it { Trailblazer::Developer.railway(Update).must_equal %{[>model.build,>contract.build,>contract.default.validate,<<PersistTest::Create::Fail1,>persist.save,<<PersistTest::Create::Fail2]} }
+  it { Trailblazer::Developer.railway(Update).must_equal %{[>model.build,>contract.default.build,>contract.default.validate,<<PersistTest::Create::Fail1,>persist.save,<<PersistTest::Create::Fail2]} }
 
   #---
   it do

@@ -9,7 +9,7 @@ module Trailblazer
               [options, flow_options]
         end
 
-        {task: task, id: "contract.build"}
+        {task: task, id: "contract.#{name}.build"}
       end
 
       module Build

@@ -59,7 +59,7 @@ class DocsContractOverviewTest < Minitest::Spec
     result.wtf.gsub(/0x\w+/, "").must_equal %{`-- DocsContractOverviewTest::Create
    |-- Start.default
    |-- model.build
-   |-- contract.build
+   |-- contract.default.build
    |-- contract.default.validate
    |   |-- Start.default
    |   |-- contract.default.params_extract
@@ -484,7 +484,7 @@ class DocContractTest < Minitest::Spec
       property :id
     end
 
-    step Contract::Build(constant: MyContract), replace: "contract.build"
+    step Contract::Build(constant: MyContract), replace: "contract.default.build"
   end
 
   it { Breach.(params: { id:1, title: "Fame" }).inspect(:model).must_equal %{<Result:true [#<struct DocContractTest::Song id=1, title="Fame">] >} }
@@ -496,7 +496,7 @@ class DocContractTest < Minitest::Spec
       property :id
     end
     # override the original block as if it's never been there.
-    step Contract::Build(constant: MyContract), replace: "contract.build"
+    step Contract::Build(constant: MyContract), replace: "contract.default.build"
   end
 
   it { Break.(params: { id:1, title: "Fame" }).inspect(:model).must_equal %{<Result:true [#<struct DocContractTest::Song id=1, title=nil>] >} }
