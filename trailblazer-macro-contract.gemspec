@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
   spec.description   = 'Trailblazer operation form object specific macros'
   spec.summary       = 'Macros for form-objects: Build, Validate, Persist'
   spec.homepage      = "http://trailblazer.to"
-  spec.license       = "MIT"
+  spec.license       = "LGPL-3.0"
 
   spec.files         = `git ls-files -z`.split("\x0").reject do |f|
     f.match(%r{^test/})
