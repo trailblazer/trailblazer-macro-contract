@@ -46,7 +46,7 @@ module Trailblazer
         def call(ctx, **)
           validate!(
             ctx,
-            representer: ctx["representer.#{@name}.class"] ||= @representer, # FIXME: maybe @representer should use DI.
+            representer: ctx[:"representer.#{@name}.class"] ||= @representer, # FIXME: maybe @representer should use DI.
             params_path: @params_path
           )
         end
