@@ -5,7 +5,7 @@ module Trailblazer
       # result.contract.errors = {..}
       # Deviate to left track if optional key is not found in params.
       # Deviate to left if validation result falsey.
-      def self.Validate(skip_extract: false, name: "default", representer: false, key: nil, constant: nil) # DISCUSS: should we introduce something like Validate::Deserializer?
+      def self.Validate(skip_extract: false, name: "default", representer: false, key: nil, constant: nil, invalid_end: false) # DISCUSS: should we introduce something like Validate::Deserializer?
         params_path = :"contract.#{name}.params" # extract_params! save extracted params here.
 
         extract  = Validate::Extract.new(key: key, params_path: params_path).freeze
@@ -22,6 +22,9 @@ module Trailblazer
 
         # Deviate End.extract_failure to the standard failure track as a default. This can be changed from the user side.
         options = options.merge(activity.Output(:extract_failure) => activity.Track(:failure)) unless skip_extract
+
+        # Halt failure track to End with {contract.name.invalid}.
+        options = options.merge(activity.Output(:failure) => activity.End("contract.#{name}.invalid")) if invalid_end
 
         options
       end
