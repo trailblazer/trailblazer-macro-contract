@@ -59,6 +59,8 @@ class ContractTest < Minitest::Spec
     it { Upsert.(params: {song: { title: nil }}).success?.must_equal false }
     # key not found
     it { Upsert.(params: {}).success?.must_equal false }
+    # no params passed
+    it { Upsert.().success?.must_equal false } 
 
     #---
     # contract.default.params gets set (TODO: change in 2.1)

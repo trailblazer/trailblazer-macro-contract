@@ -33,7 +33,7 @@ module Trailblazer
             @key, @params_path = key, params_path
           end
 
-          def call(ctx, params:, **)
+          def call(ctx, params: {}, **)
             ctx[@params_path] = @key ? params[@key] : params
           end
         end
