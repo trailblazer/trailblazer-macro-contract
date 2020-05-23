@@ -1,9 +1,11 @@
+$LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
+require "trailblazer-macro-contract"
+
 require "pp"
 require 'delegate'
+require "trailblazer/operation"
 require "trailblazer/developer"
 require "trailblazer/macro"
-require "trailblazer-macro-contract"
-require "trailblazer/developer/render/linear"
 require "minitest/autorun"
 
 # TODO: convert tests to non-rails.

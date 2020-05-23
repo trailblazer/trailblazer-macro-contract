@@ -1,5 +1,5 @@
 module Trailblazer
-  class Operation
+  module Macro
     module Contract
       def self.Persist(method: :save, name: "default")
         path = :"contract.#{name}"

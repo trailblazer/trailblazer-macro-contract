@@ -1,5 +1,7 @@
+require "reform"
+
 module Trailblazer
-  class Operation
+  module Macro
     module Contract
       def self.Build(name: "default", constant: nil, builder: nil)
         task = lambda do |(options, flow_options), **circuit_options|
