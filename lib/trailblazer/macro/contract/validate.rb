@@ -1,5 +1,5 @@
 module Trailblazer
-  class Operation
+  module Macro
     module Contract
       # result.contract = {..}
       # result.contract.errors = {..}
@@ -71,5 +71,5 @@ module Trailblazer
         end
       end
     end
-  end # Operation
+  end # Macro
 end
