@@ -297,6 +297,46 @@ class DocsContractKeyWithOutputTest < Minitest::Spec
   end
 end
 
+#---
+#- Validate( name: "default", invalid_end: true )
+class DocsContractInvalidEndTest < Minitest::Spec
+  Song = Class.new(ContractConstantTest::Song)
+
+  module Song::Contract
+    Create = ContractConstantTest::Song::Contract::Create
+  end
+
+  #:invalid-end
+  class Song::Create < Trailblazer::Operation
+    step Model( Song, :new )
+    step Contract::Build( constant: Song::Contract::Create )
+    step Contract::Validate( key: :song, invalid_end: true )
+    step Contract::Persist( )
+  end
+  #:invalid-end end
+
+  it do
+    result = Song::Create.(params: {song: { title: nil, length: nil }})
+    result.event.inspect.must_equal %{#<Trailblazer::Activity::End semantic="contract.default.invalid">}
+  end
+
+  it { Song::Create.(params: {song: { title: "SVG", length: 13 }}).inspect(:model).must_equal %{<Result:true [#<struct DocsContractInvalidEndTest::Song title=\"SVG\", length=13>] >} }
+
+  it do
+    #:invalid-end-res
+    result = Song::Create.(params: { title: "Rising Force", length: 13 })
+    result.success? #=> false
+    result.event    #=> #<Trailblazer::Activity::End semantic=:"contract.default.invalid">
+    #:invalid-end-res end
+
+    #:invalid-end-res-false
+    result = Song::Create.(params: { "song" => { title: "Rising Force", length: 13 } })
+    result.success? #=> true
+    #:invalid-end-res-false end
+  end
+end
+
+
 #- Contract::Build[ constant: XXX, name: AAA ]
 class ContractNamedConstantTest < Minitest::Spec
   Song = Class.new(ContractConstantTest::Song)
