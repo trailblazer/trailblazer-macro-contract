@@ -298,7 +298,7 @@ class DocsContractKeyWithOutputTest < Minitest::Spec
 end
 
 #---
-#- Validate( name: "default", invalid_end: true )
+#- Validate( name: "default", invalid_data_terminus: true )
 class DocsContractInvalidEndTest < Minitest::Spec
   Song = Class.new(ContractConstantTest::Song)
 
@@ -310,14 +310,14 @@ class DocsContractInvalidEndTest < Minitest::Spec
   class Song::Create < Trailblazer::Operation
     step Model( Song, :new )
     step Contract::Build( constant: Song::Contract::Create )
-    step Contract::Validate( key: :song, invalid_end: true )
+    step Contract::Validate( key: :song, invalid_data_terminus: true )
     step Contract::Persist( )
   end
   #:invalid-end end
 
   it do
     result = Song::Create.(params: {song: { title: nil, length: nil }})
-    result.event.inspect.must_equal %{#<Trailblazer::Activity::End semantic="contract.default.invalid">}
+    result.event.inspect.must_equal %{#<Trailblazer::Activity::End semantic=:invalid_data>}
   end
 
   it { Song::Create.(params: {song: { title: "SVG", length: 13 }}).inspect(:model).must_equal %{<Result:true [#<struct DocsContractInvalidEndTest::Song title=\"SVG\", length=13>] >} }
