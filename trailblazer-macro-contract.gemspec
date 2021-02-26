@@ -21,11 +21,12 @@ Gem::Specification.new do |spec|
   spec.add_dependency "reform", ">= 2.2.0", "< 3.0.0"
 
   spec.add_development_dependency "bundler"
-  spec.add_development_dependency "dry-validation", "0.11.1" # FIXME: upgrade example code
+  spec.add_development_dependency "dry-validation"
   spec.add_development_dependency "reform-rails", "~> 0.2.0.rc2"
   spec.add_development_dependency "trailblazer-operation", ">= 0.6.2"
   spec.add_development_dependency "trailblazer-macro", ">= 2.1.2", "< 2.2.0"
   spec.add_development_dependency "trailblazer-developer"
+  spec.add_development_dependency "activemodel", "~> 6.0.0" # FIXME: we still don't support the Rails 6.1 errors object.
 
   spec.add_development_dependency "minitest"
   spec.add_development_dependency "rake"

@@ -29,12 +29,13 @@ module Trailblazer
                           end
         end
 
-        def self.call_builder(options, circuit_options, builder: raise, constant: raise, name: raise)
-          tmp_options = options.to_hash.merge(
+        def self.call_builder(ctx, circuit_options, builder: raise, constant: raise, name: raise)
+          tmp_options = ctx.to_hash.merge(
             constant: constant,
             name:     name
           )
-          Trailblazer::Option(builder).(options, tmp_options, circuit_options)
+
+          Trailblazer::Option(builder).(ctx, keyword_arguments: tmp_options, **circuit_options) # TODO: why can't we build the {builder} at compile time?
         end
       end
 
