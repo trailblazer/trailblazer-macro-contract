@@ -407,16 +407,20 @@ class DryValidationContractTest < Minitest::Spec
   class Create < Trailblazer::Operation
     # contract to verify params formally.
     class MyContract < Reform::Form
-      feature Reform::Form::Dry
+      feature Dry
       property :id
       property :title
 
       validation name: :default do
-        required(:id).filled
+        params do
+          required(:id).filled
+        end
       end
 
       validation name: :extra, if: :default do
-        required(:title).filled(min_size?: 2)
+        params do
+          required(:title).filled(min_size?: 2)
+        end
       end
     end
     #~form end
