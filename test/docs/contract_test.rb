@@ -449,8 +449,10 @@ class DryValidationContractTest < Minitest::Spec
   #---
   # Contract::Validate(constant: DrySchema)
   class OpWithSchema < Trailblazer::Operation
-    Schema = Dry::Validation.Schema do
-      required(:title).filled
+    Schema = Dry::Validation.Contract do
+      params do
+        required(:title).filled
+      end
     end
 
     step Model( Song, :new ) # FIXME.
@@ -464,7 +466,7 @@ class DryValidationContractTest < Minitest::Spec
   it "shows error messages" do
     result = OpWithSchema.(params: {song: { title: nil }})
 
-    result[:"result.contract.default"].errors.must_equal(title: ["must be filled"])
+    result[:"result.contract.default"].errors.inspect.must_equal %{#<Dry::Validation::MessageSet messages=[#<Dry::Schema::Message text=\"must be filled\" path=[:title] predicate=:filled? input=nil>] options={:source=>[#<Dry::Schema::Message text=\"must be filled\" path=[:title] predicate=:filled? input=nil>], :hints=>false}>}
   end
   # key not found
   it { OpWithSchema.(params: {}).success?.must_equal false }
