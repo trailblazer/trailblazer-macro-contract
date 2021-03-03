@@ -1,3 +1,7 @@
+# 2.1.1
+
+* Support for Ruby 3.0.
+
 # 2.1.0
 
 * Finally.
