@@ -7,8 +7,7 @@ module Trailblazer
       # Deviate to left if validation result falsey.
       def self.Validate(skip_extract: false, name: "default", representer: false, key: nil, constant: nil, invalid_data_terminus: false) # DISCUSS: should we introduce something like Validate::Deserializer?
         params_path = :"contract.#{name}.params" # extract_params! save extracted params here.
-
-        key_path = "contract.#{name}.extract_key"
+        key_path    = :"contract.#{name}.extract_key"
 
         extract  = Validate::Extract.new(key_path: key_path, params_path: params_path).freeze
         validate = Validate.new(name: name, representer: representer, params_path: params_path, constant: constant).freeze
