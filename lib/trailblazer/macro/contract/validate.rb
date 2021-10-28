@@ -6,18 +6,20 @@ module Trailblazer
       # Deviate to left track if optional key is not found in params.
       # Deviate to left if validation result falsey.
       def self.Validate(skip_extract: false, name: "default", representer: false, key: nil, constant: nil, invalid_data_terminus: false) # DISCUSS: should we introduce something like Validate::Deserializer?
-        params_path = :"contract.#{name}.params" # extract_params! save extracted params here.
-        key_path    = :"contract.#{name}.extract_key"
+        contract_path = :"contract.#{name}" # the contract instance
+        params_path   = :"contract.#{name}.params" # extract_params! save extracted params here.
+        key_path      = :"contract.#{name}.extract_key"
 
-        extract  = Validate::Extract.new(key_path: key_path, params_path: params_path).freeze
-        validate = Validate.new(name: name, representer: representer, params_path: params_path, constant: constant).freeze
+        extract  = Validate::Extract.new(key_path: key_path, params_path: params_path)
+        validate = Validate.new(name: name, representer: representer, params_path: params_path, contract_path: contract_path)
 
-        validate_injections = {key_path => ->(*) { key }} # default to {key} if not injected.
+        extract_injections  = {key_path => ->(*) { key }} # default to {key} if not injected.
+        validate_injections = {contract_path => ->(ctx, *) { constant }} # default the contract instance to {constant}, if not injected (or passed down from {Build()})
 
         # Build a simple Railway {Activity} for the internal flow.
         activity = Class.new(Activity::Railway(name: "Contract::Validate")) do
-          step extract,  id: "#{params_path}_extract", Output(:failure) => End(:extract_failure), inject: [validate_injections] unless skip_extract# || representer
-          step validate, id: "contract.#{name}.call"
+          step extract,  id: "#{params_path}_extract", Output(:failure) => End(:extract_failure), inject: [extract_injections] unless skip_extract# || representer
+          step validate, id: "contract.#{name}.call", inject: [validate_injections]
         end
 
         options = activity.Subprocess(activity)
@@ -45,8 +47,8 @@ module Trailblazer
           end
         end
 
-        def initialize(name: "default", representer: false, params_path: nil, constant: nil)
-          @name, @representer, @params_path, @constant = name, representer, params_path, constant
+        def initialize(name: "default", representer: false, params_path: nil, contract_path: )
+          @name, @representer, @params_path, @contract_path = name, representer, params_path, contract_path
         end
 
         # Task: Validates contract `:name`.
@@ -58,20 +60,19 @@ module Trailblazer
           )
         end
 
-        def validate!(options, representer: false, from: :document, params_path: nil)
-          path     = :"contract.#{@name}"
-          contract = @constant || options[path]
+        def validate!(ctx, representer: false, from: :document, params_path: nil)
+          contract = ctx[@contract_path] # grab contract instance from "contract.default" (usually set in {Contract::Build()})
 
           # this is for 1.1-style compatibility and should be removed once we have Deserializer in place:
-          options[:"result.#{path}"] = result =
+          ctx[:"result.#{@contract_path}"] = result =
             if representer
               # use :document as the body and let the representer deserialize to the contract.
               # this will be simplified once we have Deserializer.
               # translates to contract.("{document: bla}") { MyRepresenter.new(contract).from_json .. }
-              contract.(options[from]) { |document| representer.new(contract).parse(document) }
+              contract.(ctx[from]) { |document| representer.new(contract).parse(document) }
             else
               # let Reform handle the deserialization.
-              contract.(options[params_path])
+              contract.(ctx[params_path])
             end
 
           result.success?
