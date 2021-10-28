@@ -8,12 +8,16 @@ module Trailblazer
       def self.Validate(skip_extract: false, name: "default", representer: false, key: nil, constant: nil, invalid_data_terminus: false) # DISCUSS: should we introduce something like Validate::Deserializer?
         params_path = :"contract.#{name}.params" # extract_params! save extracted params here.
 
-        extract  = Validate::Extract.new(key: key, params_path: params_path).freeze
+        key_path = "contract.#{name}.extract_key"
+
+        extract  = Validate::Extract.new(key_path: key_path, params_path: params_path).freeze
         validate = Validate.new(name: name, representer: representer, params_path: params_path, constant: constant).freeze
+
+        validate_injections = {key_path => ->(*) { key }} # default to {key} if not injected.
 
         # Build a simple Railway {Activity} for the internal flow.
         activity = Class.new(Activity::Railway(name: "Contract::Validate")) do
-          step extract,  id: "#{params_path}_extract", Output(:failure) => End(:extract_failure) unless skip_extract# || representer
+          step extract,  id: "#{params_path}_extract", Output(:failure) => End(:extract_failure), inject: [validate_injections] unless skip_extract# || representer
           step validate, id: "contract.#{name}.call"
         end
 
@@ -32,12 +36,13 @@ module Trailblazer
       class Validate
         # Task: extract the contract's input from params by reading `:key`.
         class Extract
-          def initialize(key: nil, params_path: nil)
-            @key, @params_path = key, params_path
+          def initialize(key_path: nil, params_path: nil)
+            @key_path, @params_path = key_path, params_path
           end
 
           def call(ctx, params: {}, **)
-            ctx[@params_path] = @key ? params[@key] : params
+            key = ctx[@key_path] # e.g. {:song}.
+            ctx[@params_path] = key ? params[key] : params
           end
         end
 
