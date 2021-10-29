@@ -273,9 +273,9 @@ class DocsContractInjectedKeyTest < Minitest::Spec
     step Contract::Build(constant: Song::Contract::Create)
     #~meths end
     step Contract::Validate() # we don't define a key here! E.g. {key: "song"}
-  #:inject-key-op end
     step Contract::Persist()
   end
+  #:inject-key-op end
 
   # empty {:params}, validation fails
   it { Song::Create.(params: {}).inspect(:model, "result.contract.default.extract").must_equal %{<Result:false [#<struct DocsContractInjectedKeyTest::Song title=nil, length=nil>, nil] >} }
@@ -331,6 +331,37 @@ class DocsContractKeyWithOutputTest < Minitest::Spec
     result.event    #=> #<Trailblazer::Activity::End semantic=:key_not_found>
     #:key-output-res-false end
   end
+end
+
+#---
+#- Validate() with injected {:"contract.default"} and no `Build()`.
+class DocsContractInjectedContractTest < Minitest::Spec
+  Song = Class.new(ContractConstantTest::Song)
+
+  module Song::Contract
+    Create = ContractConstantTest::Song::Contract::Create
+  end
+
+  #:inject-contract-op
+  class Song::Create < Trailblazer::Operation
+    # we omit the {Model()} call as the run-time contract contains the model.
+    # we don't have a {Contract::Build()} step here.
+    step Contract::Validate(key: "song") # you could use an injection here, too!
+    step Contract::Persist()
+  end
+  #:inject-contract-op end
+
+  it {
+    params = {"song" => { title: "SVG", length: 13 }}
+    #:inject-contract-call
+    res = Song::Create.(
+      params:             params,
+      "contract.default": Song::Contract::Create.new(Song.new) # we build the contract ourselves!
+    )
+    #:inject-contract-call end
+    res.inspect(:model).must_equal %{<Result:true [nil] >}
+    res[:"contract.default"].model.inspect.must_equal %{#<struct DocsContractInjectedContractTest::Song title=\"SVG\", length=13>}
+  }
 end
 
 #---
