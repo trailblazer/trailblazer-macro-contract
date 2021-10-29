@@ -13,8 +13,10 @@ module Trailblazer
         extract  = Validate::Extract.new(key_path: key_path, params_path: params_path)
         validate = Validate.new(name: name, representer: representer, params_path: params_path, contract_path: contract_path)
 
+        # These are defaulting dependency injection, more here
+        # https://trailblazer.to/2.1/docs/activity.html#activity-dependency-injection-inject-defaulting
         extract_injections  = {key_path => ->(*) { key }} # default to {key} if not injected.
-        validate_injections = {contract_path => ->(ctx, *) { constant }} # default the contract instance to {constant}, if not injected (or passed down from {Build()})
+        validate_injections = {contract_path => ->(*) { constant }} # default the contract instance to {constant}, if not injected (or passed down from {Build()})
 
         # Build a simple Railway {Activity} for the internal flow.
         activity = Class.new(Activity::Railway(name: "Contract::Validate")) do

@@ -266,10 +266,14 @@ class DocsContractInjectedKeyTest < Minitest::Spec
     Create = ContractConstantTest::Song::Contract::Create
   end
 
+  #:inject-key-op
   class Song::Create < Trailblazer::Operation
+    #~meths
     step Model(Song, :new)
     step Contract::Build(constant: Song::Contract::Create)
+    #~meths end
     step Contract::Validate() # we don't define a key here! E.g. {key: "song"}
+  #:inject-key-op end
     step Contract::Persist()
   end
 
@@ -278,14 +282,15 @@ class DocsContractInjectedKeyTest < Minitest::Spec
   # no {:key} injected/defined, we don't find the data in {params}.
   it { Song::Create.(params: {"song" => { title: "SVG", length: 13 }}).inspect(:model, "result.contract.default.extract").must_equal %{<Result:false [#<struct DocsContractInjectedKeyTest::Song title=nil, length=nil>, nil] >} }
   # {:key} defined and everything works smoothly
-  it { Song::Create.(params: {"song" => { title: "SVG", length: 13 }}, "contract.default.extract_key": "song").inspect(:model).must_equal %{<Result:true [#<struct DocsContractInjectedKeyTest::Song title=\"SVG\", length=13>] >} }
-  # # it do
-  # #   result = Song::Create.(params: { "song" => { title: "Rising Force", length: 13 } })
-  #   result.success? #=> true
-
-  #   result = Song::Create.(params: { title: "Rising Force", length: 13 })
-  #   result.success? #=> false
-  # end
+  it {
+    params = {"song" => { title: "SVG", length: 13 }}
+    #:inject-key-call
+    res = Song::Create.(
+      params:                         params,
+      "contract.default.extract_key": "song"
+    )
+    #:inject-key-call end
+    .inspect(:model).must_equal %{<Result:true [#<struct DocsContractInjectedKeyTest::Song title=\"SVG\", length=13>] >} }
 end
 
 #---
