@@ -444,24 +444,24 @@ class ContractInjectConstantTest < Minitest::Spec
   end
   #:di-constant-contract end
   #:di-constant
-  class Create < Trailblazer::Operation
-    step Model( Song, :new )
-    step Contract::Build()
+  class Song::Create < Trailblazer::Operation
+    step Model(Song, :new)
+    step Contract::Build() # no constant provided here!
     step Contract::Validate()
-    step Contract::Persist( method: :sync )
+    step Contract::Persist(method: :sync)
   end
   #:di-constant end
 
   it do
     #:di-contract-call
-    Create.(
-      params: { title: "Anthony's Song" },
-      :"contract.default.class" => MyContract
+    Song::Create.(
+      params:                   { title: "Anthony's Song" },
+      "contract.default.class": MyContract # dependency injection!
     )
     #:di-contract-call end
   end
-  it { Create.(params: { title: "A" }, :"contract.default.class" => MyContract).inspect(:model).must_equal %{<Result:false [#<struct ContractInjectConstantTest::Song id=nil, title=nil>] >} }
-  it { Create.(params: { title: "Anthony's Song" }, :"contract.default.class" => MyContract).inspect(:model).must_equal %{<Result:true [#<struct ContractInjectConstantTest::Song id=nil, title="Anthony's Song">] >} }
+  it { Song::Create.(params: { title: "A" }, :"contract.default.class" => MyContract).inspect(:model).must_equal %{<Result:false [#<struct ContractInjectConstantTest::Song id=nil, title=nil>] >} }
+  it { Song::Create.(params: { title: "Anthony's Song" }, :"contract.default.class" => MyContract).inspect(:model).must_equal %{<Result:true [#<struct ContractInjectConstantTest::Song id=nil, title="Anthony's Song">] >} }
 end
 
 class DryValidationContractTest < Minitest::Spec
