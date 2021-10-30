@@ -3,7 +3,11 @@ require "reform"
 module Trailblazer
   module Macro
     module Contract
+      # DISCUSS: could we make the manual builder a step and save a lot of circuit-interface code?
       def self.Build(name: "default", constant: nil, builder: nil)
+        build_injections  = {"contract.#{name}.class": ->(*) { constant }} # default to {constant} if not injected.
+
+
         task = lambda do |(options, flow_options), **circuit_options|
           result = Build.(options, circuit_options, name: name, constant: constant, builder: builder)
 
@@ -11,19 +15,20 @@ module Trailblazer
               [options, flow_options]
         end
 
-        {task: task, id: "contract.build"}
+        {task: task, id: "contract.build", inject: [build_injections]}
       end
 
       module Build
         # Build contract at runtime.
-        def self.call(options, circuit_options, name: "default", constant: nil, builder: nil)
-          # TODO: we could probably clean this up a bit at some point.
-          contract_class = constant || options[:"contract.#{name}.class"] # DISCUSS: Injection possible here?
-          model          = options[:model]
-          name           = :"contract.#{name}"
+        def self.call(ctx, circuit_options, name: "default", constant: nil, builder: nil)
+          contract_class = ctx[:"contract.#{name}.class"] # the injection makes sure this is set.
 
-          options[name] = if builder
-                            call_builder(options, circuit_options, builder: builder, constant: contract_class, name: name)
+          # TODO: we could probably clean this up a bit at some point.
+          model          = ctx[:model]
+
+          name           = :"contract.#{name}"
+          ctx[name] = if builder
+                            call_builder(ctx, circuit_options, builder: builder, constant: contract_class, name: name)
                           else
                             contract_class.new(model)
                           end
