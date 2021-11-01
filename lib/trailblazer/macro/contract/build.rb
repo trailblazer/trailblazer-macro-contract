@@ -2,46 +2,48 @@ require "reform"
 
 module Trailblazer
   module Macro
+    # This Circuit-task calls the {task} Option, then allows
+    # to run an arbitary block to process the option's result.
+    class CircuitTaskWithResultProcessing < Activity::TaskBuilder::Task # DISCUSS: extract to public?
+      def initialize(task, user_proc, block)
+        @block = block
+        super(task, user_proc)
+      end
+
+      def call_option(task_with_option_interface, (ctx, flow_options), **circuit_options)
+        result = super
+
+        @block.call(result, ctx)
+      end
+    end
+
     module Contract
-      # DISCUSS: could we make the manual builder a step and save a lot of circuit-interface code?
       def self.Build(name: "default", constant: nil, builder: nil)
         build_injections  = {"contract.#{name}.class": ->(*) { constant }} # default to {constant} if not injected.
 
-
-        task = lambda do |(options, flow_options), **circuit_options|
-          result = Build.(options, circuit_options, name: name, constant: constant, builder: builder)
-
-          return Activity::TaskBuilder.binary_signal_for(result, Activity::Right, Activity::Left),
-              [options, flow_options]
-        end
-
-        {task: task, id: "contract.build", inject: [build_injections]}
-      end
-
-      module Build
-        # Build contract at runtime.
-        def self.call(ctx, circuit_options, name: "default", constant: nil, builder: nil)
-          contract_class = ctx[:"contract.#{name}.class"] # the injection makes sure this is set.
-
-          # TODO: we could probably clean this up a bit at some point.
-          model          = ctx[:model]
-
-          name           = :"contract.#{name}"
-          ctx[name] = if builder
-                            call_builder(ctx, circuit_options, builder: builder, constant: contract_class, name: name)
-                          else
-                            contract_class.new(model)
-                          end
-        end
-
-        def self.call_builder(ctx, circuit_options, builder: raise, constant: raise, name: raise)
-          tmp_options = ctx.to_hash.merge(
+        input = ->(ctx, **) do
+          ctx.to_hash.merge(
             constant: constant,
-            name:     name
+            name:     :"contract.#{name}"
           )
-
-          Trailblazer::Option(builder).(ctx, keyword_arguments: tmp_options, **circuit_options) # TODO: why can't we build the {builder} at compile time?
         end
+
+        default_contract_builder = ->(ctx, model:, **) { ctx[:"contract.#{name}.class"].new(model) }
+
+        # proc is called via {Option()}.
+        task_option_proc = builder ? builder : default_contract_builder
+
+        # after the builder proc is run, assign its result to {contract.default}.
+        ctx_assign_block = ->(result, ctx) { ctx[:"contract.#{name}"] = result }
+
+        task = CircuitTaskWithResultProcessing.new(Trailblazer::Option(task_option_proc), task_option_proc, ctx_assign_block)
+
+        {
+          task:   task, id: "contract.build",
+          inject: [build_injections],
+          input:  input,
+          output: [:"contract.#{name}"] # FIXME: test if we dump other variables
+        }
       end
 
       module DSL
