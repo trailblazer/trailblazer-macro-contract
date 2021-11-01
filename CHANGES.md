@@ -1,3 +1,9 @@
+# 2.1.2
+
+* Refactor `Contract::Build` to use TRB mechanics:
+    * `:input` and `:inject` to allow injection of the contract class.
+    * an `Option()` to wrap the builder code.
+
 # 2.1.1
 
 * Support for Ruby 3.0.

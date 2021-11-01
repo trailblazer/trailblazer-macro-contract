@@ -19,22 +19,24 @@ module Trailblazer
 
     module Contract
       def self.Build(name: "default", constant: nil, builder: nil)
-        build_injections  = {"contract.#{name}.class": ->(*) { constant }} # default to {constant} if not injected.
+        contract_path     = :"contract.#{name}"
+
+        build_injections  = {"#{contract_path}.class": ->(*) { constant }} # default to {constant} if not injected.
 
         input = ->(ctx, **) do
           ctx.to_hash.merge(
             constant: constant,
-            name:     :"contract.#{name}"
+            name:     contract_path
           )
         end
 
-        default_contract_builder = ->(ctx, model:, **) { ctx[:"contract.#{name}.class"].new(model) }
+        default_contract_builder = ->(ctx, model:, **) { ctx[:"#{contract_path}.class"].new(model) }
 
         # proc is called via {Option()}.
         task_option_proc = builder ? builder : default_contract_builder
 
-        # after the builder proc is run, assign its result to {contract.default}.
-        ctx_assign_block = ->(result, ctx) { ctx[:"contract.#{name}"] = result }
+        # after the builder proc is run, assign its result to {:"contract.default"}.
+        ctx_assign_block = ->(result, ctx) { ctx[contract_path] = result }
 
         task = CircuitTaskWithResultProcessing.new(Trailblazer::Option(task_option_proc), task_option_proc, ctx_assign_block)
 
@@ -42,7 +44,7 @@ module Trailblazer
           task:   task, id: "contract.build",
           inject: [build_injections],
           input:  input,
-          output: [:"contract.#{name}"] # FIXME: test if we dump other variables
+          output: [contract_path]
         }
       end
 

@@ -67,7 +67,11 @@ class DocsContractOverviewTest < Minitest::Spec
     |   `-- End.failure
     `-- End.failure}
   end
+
+  # internal variables from {:builder} are excluded in public ctx.
+  it { Create.(params: {}).keys.inspect.must_equal %{[:params, :model, :\"result.model\", :\"contract.default\", :\"contract.default.params\", :\"representer.default.class\", :\"result.contract.default\"]} }
 end
+
 #---
 # contract MyContract
 class DocsContractExplicitTest < Minitest::Spec
@@ -572,6 +576,8 @@ class DocContractBuilderTest < Minitest::Spec
 
   it { Create.(params: {}).inspect(:model).must_equal %{<Result:false [#<struct DocContractBuilderTest::Song id=nil, title=nil>] >} }
   it { Create.(params: { title: "title"}, current_user: Module).inspect(:model).must_equal %{<Result:true [#<struct DocContractBuilderTest::Song id=nil, title="title">] >} }
+  # internal variables from {:builder} are excluded in public ctx.
+  it { Create.(params: {}).keys.inspect.must_equal %{[:params, :model, :\"result.model\", :\"contract.default\", :\"contract.default.params\", :\"representer.default.class\", :\"result.contract.default\"]} }
 end
 
 class DocContractTest < Minitest::Spec
