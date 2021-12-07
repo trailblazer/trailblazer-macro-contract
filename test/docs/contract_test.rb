@@ -620,3 +620,20 @@ class DocContractTest < Minitest::Spec
 
   it { Break.(params: { id:1, title: "Fame" }).inspect(:model).must_equal %{<Result:true [#<struct DocContractTest::Song id=1, title=nil>] >} }
 end
+
+class ModelMissingTest < Minitest::Spec
+  class Create < Trailblazer::Operation
+    class MyContract < Reform::Form
+      property :duration, virtual: true
+    end
+
+    step Contract::Build(constant: MyContract)
+    step Contract::Validate()
+  end
+
+  it do
+    result = Create.(params: {duration: 18})
+    assert_equal true, result.success?
+    assert_equal 18, result[:"contract.default"].duration
+  end
+end
