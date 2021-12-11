@@ -19,6 +19,7 @@ module Trailblazer
     end
 
     module Contract
+      # noinspection RubyClassMethodNamingConvention
       def self.Build(name: "default", constant: nil, builder: nil)
         contract_path     = :"contract.#{name}"
 
