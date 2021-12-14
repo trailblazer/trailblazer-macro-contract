@@ -3,10 +3,10 @@ require "test_helper"
 class DocsContractOverviewTest < Minitest::Spec
   Song = Struct.new(:length, :title)
 
-  #:overv-reform
+  # :overv-reform
   # app/concepts/song/create.rb
   class Create < Trailblazer::Operation
-    #~contractonly
+    # ~contractonly
     class MyContract < Reform::Form
       property :title
       property :length
@@ -14,49 +14,52 @@ class DocsContractOverviewTest < Minitest::Spec
       validates :title,  presence: true
       validates :length, numericality: true
     end
-    #~contractonly end
+    # ~contractonly end
 
-    step Model( Song, :new )
+    step Model(Song, :new)
     step Contract::Build(constant: MyContract)
     step Contract::Validate()
-    step Contract::Persist( method: :sync )
-    #~contractonly end
+    step Contract::Persist(method: :sync)
+    # ~contractonly end
   end
-  #:overv-reform end
+  # :overv-reform end
 
   puts Trailblazer::Developer.railway(Create, style: :rows)
 
-=begin
-  #:overv-reform-pipe
-   0 ==========================&model.build
-   1 =======================>contract.build
-   2 ==============&validate.params.extract
-   3 ====================&contract.validate
-   4 =========================&persist.save
-  #:overv-reform-pipe end
-=end
+  #   #:overv-reform-pipe
+  #    0 ==========================&model.build
+  #    1 =======================>contract.build
+  #    2 ==============&validate.params.extract
+  #    3 ====================&contract.validate
+  #    4 =========================&persist.save
+  #   #:overv-reform-pipe end
 
   it do
-    assert Create.(params: {})[:"contract.default"].must_be_instance_of DocsContractOverviewTest::Create::MyContract
+    assert _(Create.(params: {})[:"contract.default"]).must_be_instance_of DocsContractOverviewTest::Create::MyContract
   end
 
   #- result
   it do
-    #:result
-    result = Create.(params: { length: "A" })
+    # :result
+    result = Create.(params: {length: "A"})
 
     result[:"result.contract.default"].success?        #=> false
     result[:"result.contract.default"].errors          #=> Errors object
     result[:"result.contract.default"].errors.messages #=> {:length=>["is not a number"]}
 
-    #:result end
-    result[:"result.contract.default"].success?.must_equal false
-    result[:"result.contract.default"].errors.messages.must_equal ({:title=>["can't be blank"], :length=>["is not a number"]})
+    # :result end
+    _(result[:"result.contract.default"].success?).must_equal false
+    _(result[:"result.contract.default"].errors.messages).must_equal(
+      {
+        :title  => ["can't be blank"],
+        :length => ["is not a number"]
+      }
+    )
   end
 
   it "shows 2-level tracing" do
-    result = Create.trace( params: { length: "A" } )
-    result.wtf.gsub(/0x\w+/, "").must_equal %{`-- DocsContractOverviewTest::Create
+    result = Create.trace(params: {length: "A"})
+    _(result.wtf.gsub(/0x\w+/, "")).must_equal %{`-- DocsContractOverviewTest::Create
     |-- Start.default
     |-- model.build
     |-- contract.build
@@ -69,7 +72,9 @@ class DocsContractOverviewTest < Minitest::Spec
   end
 
   # internal variables from {:builder} are excluded in public ctx.
-  it { Create.(params: {}).keys.inspect.must_equal %{[:params, :model, :\"result.model\", :\"contract.default\", :\"contract.default.params\", :\"representer.default.class\", :\"result.contract.default\"]} }
+  it {
+    _(Create.(params: {}).keys.inspect).must_equal %{[:params, :model, :\"result.model\", :\"contract.default\", :\"contract.default.params\", :\"representer.default.class\", :\"result.contract.default\"]}
+  }
 end
 
 #---
@@ -77,7 +82,7 @@ end
 class DocsContractExplicitTest < Minitest::Spec
   Song = Struct.new(:length, :title)
 
-  #:reform-inline
+  # :reform-inline
   class MyContract < Reform::Form
     property :title
     property :length
@@ -85,23 +90,23 @@ class DocsContractExplicitTest < Minitest::Spec
     validates :title,  presence: true
     validates :length, numericality: true
   end
-  #:reform-inline end
+  # :reform-inline end
 
-  #:reform-inline-op
+  # :reform-inline-op
   # app/concepts/comment/create.rb
   class Create < Trailblazer::Operation
-    step Model( Song, :new )
+    step Model(Song, :new)
     step Contract::Build(constant: MyContract)
     step Contract::Validate()
-    step Contract::Persist( method: :sync )
+    step Contract::Persist(method: :sync)
   end
-  #:reform-inline-op end
+  # :reform-inline-op end
 end
 
 #- Validate with manual key extraction
 class DocsContractSeparateKeyTest < Minitest::Spec
   Song = Struct.new(:id, :title)
-  #:key-extr
+  # :key-extr
   class Create < Trailblazer::Operation
     class MyContract < Reform::Form
       property :title
@@ -111,20 +116,24 @@ class DocsContractSeparateKeyTest < Minitest::Spec
       "evergreen" # this is how you could do polymorphic lookups.
     end
 
-    step Model( Song, :new )
+    step Model(Song, :new)
     step Contract::Build(constant: MyContract)
     step :extract_params!
-    step Contract::Validate( skip_extract: true )
-    step Contract::Persist( method: :sync )
+    step Contract::Validate(skip_extract: true)
+    step Contract::Persist(method: :sync)
 
     def extract_params!(options, **)
       options[:"contract.default.params"] = options[:params][type]
     end
   end
-  #:key-extr end
+  # :key-extr end
 
-  it { Create.(params: { }).inspect(:model).must_equal %{<Result:false [#<struct DocsContractSeparateKeyTest::Song id=nil, title=nil>] >} }
-  it { Create.(params: {"evergreen" => { title: "SVG" }}).inspect(:model).must_equal %{<Result:true [#<struct DocsContractSeparateKeyTest::Song id=nil, title="SVG">] >} }
+  it {
+    _(Create.(params: {}).inspect(:model)).must_equal %{<Result:false [#<struct DocsContractSeparateKeyTest::Song id=nil, title=nil>] >}
+  }
+  it {
+    _(Create.(params: {"evergreen" => {title: "SVG"}}).inspect(:model)).must_equal %{<Result:true [#<struct DocsContractSeparateKeyTest::Song id=nil, title="SVG">] >}
+  }
 end
 
 #---
@@ -136,7 +145,7 @@ class ContractConstantTest < Minitest::Spec
     end
   end
 
-  #:constant-contract
+  # :constant-contract
   # app/concepts/song/contract/create.rb
   module Song::Contract
     class Create < Reform::Form
@@ -147,84 +156,101 @@ class ContractConstantTest < Minitest::Spec
       validates :length, numericality: true
     end
   end
-  #:constant-contract end
+  # :constant-contract end
 
-  #:constant
+  # :constant
   class Song::Create < Trailblazer::Operation
-    step Model( Song, :new )
-    step Contract::Build( constant: Song::Contract::Create )
+    step Model(Song, :new)
+    step Contract::Build(constant: Song::Contract::Create)
     step Contract::Validate()
     step Contract::Persist()
   end
-  #:constant end
+  # :constant end
 
-  it { Song::Create.(params: { title: "A" }).inspect(:model).must_equal %{<Result:false [#<struct ContractConstantTest::Song title=nil, length=nil>] >} }
-  it { Song::Create.(params: { title: "Anthony's Song", length: 12 }).inspect(:model).must_equal %{<Result:true [#<struct ContractConstantTest::Song title="Anthony's Song", length=12>] >} }
+  it {
+    _(Song::Create.(params: {title: "A"}).inspect(:model)).must_equal %{<Result:false [#<struct ContractConstantTest::Song title=nil, length=nil>] >}
+  }
+  it {
+    _(
+      Song::Create.(
+        params: {
+          title:  "Anthony's Song",
+          length: 12
+        }
+      ).inspect(:model)
+    ).must_equal %{<Result:true [#<struct ContractConstantTest::Song title="Anthony's Song", length=12>] >}
+  }
   it do
-    #:constant-result
-    result = Song::Create.(params: { title: "A" })
+    # :constant-result
+    result = Song::Create.(params: {title: "A"})
     result.success? #=> false
     result[:"contract.default"].errors.messages
     #=> {:title=>["is too short (minimum is 2 characters)"], :length=>["is not a number"]}
-    #:constant-result end
+    # :constant-result end
 
-    #:constant-result-true
-    result = Song::Create.(params: { title: "Rising Force", length: 13 })
+    # :constant-result-true
+    result = Song::Create.(params: {title: "Rising Force", length: 13})
     result.success? #=> true
     result["model"] #=> #<Song title="Rising Force", length=13>
-    #:constant-result-true end
+    # :constant-result-true end
   end
 
   #---
   # Song::New
-  #:constant-new
+  # :constant-new
   class Song::New < Trailblazer::Operation
-    step Model( Song, :new )
-    step Contract::Build( constant: Song::Contract::Create )
+    step Model(Song, :new)
+    step Contract::Build(constant: Song::Contract::Create)
   end
-  #:constant-new end
+  # :constant-new end
 
-  it { Song::New.(params: {}).inspect(:model).must_equal %{<Result:true [#<struct ContractConstantTest::Song title=nil, length=nil>] >} }
-  it { Song::New.(params: {})[:"contract.default"].model.inspect.must_equal %{#<struct ContractConstantTest::Song title=nil, length=nil>} }
+  it {
+    _(Song::New.(params: {}).inspect(:model)).must_equal %{<Result:true [#<struct ContractConstantTest::Song title=nil, length=nil>] >}
+  }
+  it {
+    _(Song::New.(params: {})[:"contract.default"].model.inspect).must_equal %{#<struct ContractConstantTest::Song title=nil, length=nil>}
+  }
   it do
-    #:constant-new-result
+    # :constant-new-result
     result = Song::New.(params: {})
     result["model"] #=> #<struct Song title=nil, length=nil>
     result["contract.default"]
     #=> #<Song::Contract::Create model=#<struct Song title=nil, length=nil>>
-    #:constant-new-result end
+    # :constant-new-result end
   end
 
   #---
-  #:validate-only
+  # :validate-only
   class Song::ValidateOnly < Trailblazer::Operation
-    step Model( Song, :new )
-    step Contract::Build( constant: Song::Contract::Create )
+    step Model(Song, :new)
+    step Contract::Build(constant: Song::Contract::Create)
     step Contract::Validate()
   end
-  #:validate-only end
+  # :validate-only end
 
-  it { Song::ValidateOnly.(params: {}).inspect(:model).must_equal %{<Result:false [#<struct ContractConstantTest::Song title=nil, length=nil>] >} }
+  it {
+    _(Song::ValidateOnly.(params: {}).inspect(:model)).must_equal %{<Result:false [#<struct ContractConstantTest::Song title=nil, length=nil>] >}
+  }
   it do
-    result = Song::ValidateOnly.(params: { title: "Rising Forse", length: 13 })
-    result.inspect(:model).must_equal %{<Result:true [#<struct ContractConstantTest::Song title=nil, length=nil>] >}
+    result = Song::ValidateOnly.(params: {title: "Rising Forse", length: 13})
+    _(result.inspect(:model)).must_equal %{<Result:true [#<struct ContractConstantTest::Song title=nil, length=nil>] >}
   end
 
   it do
-    #:validate-only-result-false
+    # :validate-only-result-false
     result = Song::ValidateOnly.(params: {}) # empty params
     result.success? #=> false
-    #:validate-only-result-false end
+    # :validate-only-result-false end
   end
 
   it do
-    #:validate-only-result
-    result = Song::ValidateOnly.(params: { title: "Rising Force", length: 13 })
+    # :validate-only-result
+    result = Song::ValidateOnly.(params: {title: "Rising Force", length: 13})
 
     result.success? #=> true
     result[:model] #=> #<struct Song title=nil, length=nil>
     result[:"contract.default"].title #=> "Rising Force"
-    #:validate-only-result end
+    # :validate-only-result end
   end
 end
 
@@ -237,27 +263,45 @@ class DocsContractKeyTest < Minitest::Spec
     Create = ContractConstantTest::Song::Contract::Create
   end
 
-  #:key
+  # :key
   class Song::Create < Trailblazer::Operation
-    step Model( Song, :new )
-    step Contract::Build( constant: Song::Contract::Create )
-    step Contract::Validate( key: "song" )
-    step Contract::Persist( )
+    step Model(Song, :new)
+    step Contract::Build(constant: Song::Contract::Create)
+    step Contract::Validate(key: "song")
+    step Contract::Persist()
   end
-  #:key end
+  # :key end
 
-  it { Song::Create.(params: {}).inspect(:model, "result.contract.default.extract").must_equal %{<Result:false [#<struct DocsContractKeyTest::Song title=nil, length=nil>, nil] >} }
-  it { Song::Create.(params: {"song" => { title: "SVG", length: 13 }}).inspect(:model).must_equal %{<Result:true [#<struct DocsContractKeyTest::Song title=\"SVG\", length=13>] >} }
+  it {
+    _(
+      Song::Create.(params: {}).inspect(
+        :model,
+        "result.contract.default.extract"
+      )
+    ).must_equal %{<Result:false [#<struct DocsContractKeyTest::Song title=nil, length=nil>, nil] >}
+  }
+  it {
+    _(
+      Song::Create.(
+        params: {
+          "song" => {
+            title:  "SVG",
+            length: 13
+          }
+        }
+      ).inspect(:model)
+    ).must_equal %{<Result:true [#<struct DocsContractKeyTest::Song title=\"SVG\", length=13>] >}
+  }
   it do
-    #:key-res
-    result = Song::Create.(params: { "song" => { title: "Rising Force", length: 13 } })
+    # :key-res
+    result = Song::Create.(params: {"song" => {title: "Rising Force", length: 13}})
     result.success? #=> true
-    #:key-res end
+    # :key-res end
 
-    #:key-res-false
-    result = Song::Create.(params: { title: "Rising Force", length: 13 })
+    # :key-res-false
+    result = Song::Create.(params: {title: "Rising Force", length: 13})
     result.success? #=> false
-    #:key-res-false end
+    # :key-res-false end
   end
 end
 
@@ -270,31 +314,47 @@ class DocsContractInjectedKeyTest < Minitest::Spec
     Create = ContractConstantTest::Song::Contract::Create
   end
 
-  #:inject-key-op
+  # :inject-key-op
   class Song::Create < Trailblazer::Operation
-    #~meths
+    # ~meths
     step Model(Song, :new)
     step Contract::Build(constant: Song::Contract::Create)
-    #~meths end
+    # ~meths end
     step Contract::Validate() # we don't define a key here! E.g. {key: "song"}
     step Contract::Persist()
   end
-  #:inject-key-op end
+  # :inject-key-op end
 
   # empty {:params}, validation fails
-  it { Song::Create.(params: {}).inspect(:model, "result.contract.default.extract").must_equal %{<Result:false [#<struct DocsContractInjectedKeyTest::Song title=nil, length=nil>, nil] >} }
+  it {
+    _(
+      Song::Create.(params: {}).inspect(
+        :model,
+        "result.contract.default.extract"
+      )
+    ).must_equal %{<Result:false [#<struct DocsContractInjectedKeyTest::Song title=nil, length=nil>, nil] >}
+  }
   # no {:key} injected/defined, we don't find the data in {params}.
-  it { Song::Create.(params: {"song" => { title: "SVG", length: 13 }}).inspect(:model, "result.contract.default.extract").must_equal %{<Result:false [#<struct DocsContractInjectedKeyTest::Song title=nil, length=nil>, nil] >} }
+  it {
+    _(
+      Song::Create.(params: {"song" => {title: "SVG", length: 13}}).inspect(
+        :model,
+        "result.contract.default.extract"
+      )
+    ).must_equal %{<Result:false [#<struct DocsContractInjectedKeyTest::Song title=nil, length=nil>, nil] >}
+  }
   # {:key} defined and everything works smoothly
   it {
-    params = {"song" => { title: "SVG", length: 13 }}
-    #:inject-key-call
-    res = Song::Create.(
-      params:                         params,
-      "contract.default.extract_key": "song"
-    )
-    #:inject-key-call end
-    .inspect(:model).must_equal %{<Result:true [#<struct DocsContractInjectedKeyTest::Song title=\"SVG\", length=13>] >} }
+    params = {"song" => {title: "SVG", length: 13}}
+    # :inject-key-call
+    res = _(
+      Song::Create.(
+        params:                         params,
+        "contract.default.extract_key": "song"
+      ).inspect(:model)
+      #:inject-key-call end
+    ).must_equal %{<Result:true [#<struct DocsContractInjectedKeyTest::Song title=\"SVG\", length=13>] >}
+  }
 end
 
 #---
@@ -306,34 +366,50 @@ class DocsContractKeyWithOutputTest < Minitest::Spec
     Create = ContractConstantTest::Song::Contract::Create
   end
 
-  #:key-output
+  # :key-output
   class Song::Create < Trailblazer::Operation
-    step Model( Song, :new )
-    step Contract::Build( constant: Song::Contract::Create )
-    step Contract::Validate( key: "song" ), Output(:extract_failure) => End(:key_not_found)
-    step Contract::Persist( )
+    step Model(Song, :new)
+    step Contract::Build(constant: Song::Contract::Create)
+    step Contract::Validate(key: "song"), Output(:extract_failure) => End(:key_not_found)
+    step Contract::Persist()
   end
-  #:key-output end
+  # :key-output end
 
   it do
     result = Song::Create.(params: {})
 
-    result.event.inspect.must_equal %{#<Trailblazer::Activity::End semantic=:key_not_found>}
-    result.inspect(:model, "result.contract.default.extract").must_equal %{<Result:false [#<struct DocsContractKeyWithOutputTest::Song title=nil, length=nil>, nil] >}
+    _(result.event.inspect).must_equal %{#<Trailblazer::Activity::End semantic=:key_not_found>}
+    _(
+      result.inspect(
+        :model,
+        "result.contract.default.extract"
+      )
+    ).must_equal %{<Result:false [#<struct DocsContractKeyWithOutputTest::Song title=nil, length=nil>, nil] >}
   end
 
-  it { Song::Create.(params: {"song" => { title: "SVG", length: 13 }}).inspect(:model).must_equal %{<Result:true [#<struct DocsContractKeyWithOutputTest::Song title=\"SVG\", length=13>] >} }
+  it {
+    _(
+      Song::Create.(
+        params: {
+          "song" => {
+            title:  "SVG",
+            length: 13
+          }
+        }
+      ).inspect(:model)
+    ).must_equal %{<Result:true [#<struct DocsContractKeyWithOutputTest::Song title=\"SVG\", length=13>] >}
+  }
   it do
-    #:key-output-res
-    result = Song::Create.(params: { "song" => { title: "Rising Force", length: 13 } })
+    # :key-output-res
+    result = Song::Create.(params: {"song" => {title: "Rising Force", length: 13}})
     result.success? #=> true
-    #:key-output-res end
+    # :key-output-res end
 
-    #:key-output-res-false
-    result = Song::Create.(params: { title: "Rising Force", length: 13 })
+    # :key-output-res-false
+    result = Song::Create.(params: {title: "Rising Force", length: 13})
     result.success? #=> false
     result.event    #=> #<Trailblazer::Activity::End semantic=:key_not_found>
-    #:key-output-res-false end
+    # :key-output-res-false end
   end
 end
 
@@ -346,25 +422,25 @@ class DocsContractInjectedContractTest < Minitest::Spec
     Create = ContractConstantTest::Song::Contract::Create
   end
 
-  #:inject-contract-op
+  # :inject-contract-op
   class Song::Create < Trailblazer::Operation
     # we omit the {Model()} call as the run-time contract contains the model.
     # we don't have a {Contract::Build()} step here.
     step Contract::Validate(key: "song") # you could use an injection here, too!
     step Contract::Persist()
   end
-  #:inject-contract-op end
+  # :inject-contract-op end
 
   it {
-    params = {"song" => { title: "SVG", length: 13 }}
-    #:inject-contract-call
+    params = {"song" => {title: "SVG", length: 13}}
+    # :inject-contract-call
     res = Song::Create.(
       params:             params,
       "contract.default": Song::Contract::Create.new(Song.new) # we build the contract ourselves!
     )
-    #:inject-contract-call end
-    res.inspect(:model).must_equal %{<Result:true [nil] >}
-    res[:"contract.default"].model.inspect.must_equal %{#<struct DocsContractInjectedContractTest::Song title=\"SVG\", length=13>}
+    # :inject-contract-call end
+    _(res.inspect(:model)).must_equal %{<Result:true [nil] >}
+    _(res[:"contract.default"].model.inspect).must_equal %{#<struct DocsContractInjectedContractTest::Song title=\"SVG\", length=13>}
   }
 end
 
@@ -377,36 +453,46 @@ class DocsContractInvalidEndTest < Minitest::Spec
     Create = ContractConstantTest::Song::Contract::Create
   end
 
-  #:invalid-end
+  # :invalid-end
   class Song::Create < Trailblazer::Operation
-    step Model( Song, :new )
-    step Contract::Build( constant: Song::Contract::Create )
-    step Contract::Validate( key: :song, invalid_data_terminus: true )
-    step Contract::Persist( )
+    step Model(Song, :new)
+    step Contract::Build(constant: Song::Contract::Create)
+    step Contract::Validate(key: :song, invalid_data_terminus: true)
+    step Contract::Persist()
   end
-  #:invalid-end end
+  # :invalid-end end
 
   it do
-    result = Song::Create.(params: {song: { title: nil, length: nil }})
-    result.event.inspect.must_equal %{#<Trailblazer::Activity::End semantic=:invalid_data>}
+    result = Song::Create.(params: {song: {title: nil, length: nil}})
+    _(result.event.inspect).must_equal %{#<Trailblazer::Activity::End semantic=:invalid_data>}
   end
 
-  it { Song::Create.(params: {song: { title: "SVG", length: 13 }}).inspect(:model).must_equal %{<Result:true [#<struct DocsContractInvalidEndTest::Song title=\"SVG\", length=13>] >} }
+  it {
+    _(
+      Song::Create.(
+        params: {
+          song: {
+            title:  "SVG",
+            length: 13
+          }
+        }
+      ).inspect(:model)
+    ).must_equal %{<Result:true [#<struct DocsContractInvalidEndTest::Song title=\"SVG\", length=13>] >}
+  }
 
   it do
-    #:invalid-end-res
-    result = Song::Create.(params: { title: "Rising Force", length: 13 })
+    # :invalid-end-res
+    result = Song::Create.(params: {title: "Rising Force", length: 13})
     result.success? #=> false
     result.event    #=> #<Trailblazer::Activity::End semantic=:"contract.default.invalid">
-    #:invalid-end-res end
+    # :invalid-end-res end
 
-    #:invalid-end-res-false
-    result = Song::Create.(params: { "song" => { title: "Rising Force", length: 13 } })
+    # :invalid-end-res-false
+    result = Song::Create.(params: {"song" => {title: "Rising Force", length: 13}})
     result.success? #=> true
-    #:invalid-end-res-false end
+    # :invalid-end-res-false end
   end
 end
-
 
 #- Contract::Build[ constant: XXX, name: AAA ]
 class ContractNamedConstantTest < Minitest::Spec
@@ -416,23 +502,34 @@ class ContractNamedConstantTest < Minitest::Spec
     Create = ContractConstantTest::Song::Contract::Create
   end
 
-  #:constant-name
+  # :constant-name
   class Song::Create < Trailblazer::Operation
-    step Model( Song, :new )
-    step Contract::Build(    name: "form", constant: Song::Contract::Create )
-    step Contract::Validate( name: "form" )
-    step Contract::Persist(  name: "form" )
+    step Model(Song, :new)
+    step Contract::Build(name: "form", constant: Song::Contract::Create)
+    step Contract::Validate(name: "form")
+    step Contract::Persist(name: "form")
   end
-  #:constant-name end
+  # :constant-name end
 
-  it { Song::Create.(params: { title: "A" }).inspect(:model).must_equal %{<Result:false [#<struct ContractNamedConstantTest::Song title=nil, length=nil>] >} }
-  it { Song::Create.(params: { title: "Anthony's Song", length: 13 }).inspect(:model).must_equal %{<Result:true [#<struct ContractNamedConstantTest::Song title="Anthony's Song", length=13>] >} }
+  it {
+    _(Song::Create.(params: {title: "A"}).inspect(:model)).must_equal %{<Result:false [#<struct ContractNamedConstantTest::Song title=nil, length=nil>] >}
+  }
+  it {
+    _(
+      Song::Create.(
+        params: {
+          title:  "Anthony's Song",
+          length: 13
+        }
+      ).inspect(:model)
+    ).must_equal %{<Result:true [#<struct ContractNamedConstantTest::Song title="Anthony's Song", length=13>] >}
+  }
 
   it do
-    #:name-res
-    result = Song::Create.(params: { title: "A" })
+    # :name-res
+    result = Song::Create.(params: {title: "A"})
     result[:"contract.form"].errors.messages #=> {:title=>["is too short (minimum is 2 ch...
-    #:name-res end
+    # :name-res end
   end
 end
 
@@ -441,31 +538,46 @@ end
 #- contract class
 class ContractInjectConstantTest < Minitest::Spec
   Song = Struct.new(:id, :title)
-  #:di-constant-contract
+  # :di-constant-contract
   class MyContract < Reform::Form
     property :title
     validates :title, length: 2..33
   end
-  #:di-constant-contract end
-  #:di-constant
+
+  # :di-constant-contract end
+  # :di-constant
   class Song::Create < Trailblazer::Operation
     step Model(Song, :new)
     step Contract::Build() # no constant provided here!
     step Contract::Validate()
     step Contract::Persist(method: :sync)
   end
-  #:di-constant end
+  # :di-constant end
 
   it do
-    #:di-contract-call
+    # :di-contract-call
     Song::Create.(
-      params:                   { title: "Anthony's Song" },
+      params:                   {title: "Anthony's Song"},
       "contract.default.class": MyContract # dependency injection!
     )
-    #:di-contract-call end
+    # :di-contract-call end
   end
-  it { Song::Create.(params: { title: "A" }, :"contract.default.class" => MyContract).inspect(:model).must_equal %{<Result:false [#<struct ContractInjectConstantTest::Song id=nil, title=nil>] >} }
-  it { Song::Create.(params: { title: "Anthony's Song" }, :"contract.default.class" => MyContract).inspect(:model).must_equal %{<Result:true [#<struct ContractInjectConstantTest::Song id=nil, title="Anthony's Song">] >} }
+  it {
+    _(
+      Song::Create.(
+        params: {title: "A"},
+        :"contract.default.class" => MyContract
+      ).inspect(:model)
+    ).must_equal %{<Result:false [#<struct ContractInjectConstantTest::Song id=nil, title=nil>] >}
+  }
+  it {
+    _(
+      Song::Create.(
+        params: {title: "Anthony's Song"},
+        :"contract.default.class" => MyContract
+      ).inspect(:model)
+    ).must_equal %{<Result:true [#<struct ContractInjectConstantTest::Song id=nil, title="Anthony's Song">] >}
+  }
 end
 
 class DryValidationContractTest < Minitest::Spec
@@ -473,7 +585,7 @@ class DryValidationContractTest < Minitest::Spec
   #---
   # DRY-validation with multiple validation sets,
   #- result.path
-  #:dry-schema
+  # :dry-schema
   require "reform/form/dry"
   class Create < Trailblazer::Operation
     # contract to verify params formally.
@@ -494,28 +606,62 @@ class DryValidationContractTest < Minitest::Spec
         end
       end
     end
-    #~form end
+    # ~form end
 
-    step Model( Song, :new )                      # create the op's main model.
-    step Contract::Build( constant: MyContract )  # create the Reform contract.
-    step Contract::Validate()                     # validate the Reform contract.
-    step Contract::Persist( method: :sync)        # persist the contract's data via the model.
-    #~form end
+    step Model(Song, :new)                      # create the op's main model.
+    step Contract::Build(constant: MyContract)  # create the Reform contract.
+    step Contract::Validate() # validate the Reform contract.
+    step Contract::Persist(method: :sync) # persist the contract's data via the model.
+    # ~form end
   end
-  #:dry-schema end
+  # :dry-schema end
 
   puts "@@@@@ #{Trailblazer::Developer.railway(Create, style: :rows)}"
 
-  it { Create.(params: {}).inspect(:"result.contract.default").must_include "Result:false"}
-  it { Create.(params: {}).inspect(:"result.contract.default").must_include "errors={:id=>[\"must be filled\""}
+  it { _(Create.(params: {}).inspect(:"result.contract.default")).must_include "Result:false" }
+  it { _(Create.(params: {}).inspect(:"result.contract.default")).must_include "errors={:id=>[\"must be filled\"" }
 
-  it { Create.(params: { id: 1 }).inspect(:model, :"result.contract.default").must_include "Result:false"}
-  it { Create.(params: { id: 1 }).inspect(:model, :"result.contract.default").must_include "errors={:title=>[\"must be filled\", \"size cannot be less than 2\"]}"}
-  it { Create.(params: { id: 1 }).inspect(:model, :"result.contract.default").wont_include ":id=>[\"must be filled\""}
+  it { _(Create.(params: {id: 1}).inspect(:model, :"result.contract.default")).must_include "Result:false" }
+  it {
+    _(
+      Create.(params: {id: 1}).inspect(
+        :model,
+        :"result.contract.default"
+      )
+    ).must_include "errors={:title=>[\"must be filled\", \"size cannot be less than 2\"]}"
+  }
+  it { _(Create.(params: {id: 1}).inspect(:model, :"result.contract.default")).wont_include ":id=>[\"must be filled\"" }
 
-  it { Create.(params: { id: 1, title: "" }).inspect(:model).must_equal %{<Result:false [#<struct DryValidationContractTest::Song id=nil, title=nil>] >} }
-  it { Create.(params: { id: 1, title: "Y" }).inspect(:model).must_equal %{<Result:false [#<struct DryValidationContractTest::Song id=nil, title=nil>] >} }
-  it { Create.(params: { id: 1, title: "Yo" }).inspect(:model).must_equal %{<Result:true [#<struct DryValidationContractTest::Song id=1, title="Yo">] >} }
+  it {
+    _(
+      Create.(
+        params: {
+          id:    1,
+          title: ""
+        }
+      ).inspect(:model)
+    ).must_equal %{<Result:false [#<struct DryValidationContractTest::Song id=nil, title=nil>] >}
+  }
+  it {
+    _(
+      Create.(
+        params: {
+          id:    1,
+          title: "Y"
+        }
+      ).inspect(:model)
+    ).must_equal %{<Result:false [#<struct DryValidationContractTest::Song id=nil, title=nil>] >}
+  }
+  it {
+    _(
+      Create.(
+        params: {
+          id:    1,
+          title: "Yo"
+        }
+      ).inspect(:model)
+    ).must_equal %{<Result:true [#<struct DryValidationContractTest::Song id=1, title="Yo">] >}
+  }
 
   #---
   # Contract::Validate(constant: DrySchema)
@@ -526,30 +672,29 @@ class DryValidationContractTest < Minitest::Spec
       end
     end
 
-    step Model( Song, :new ) # FIXME.
-    step Contract::Validate( constant: Schema, key: :song) # generic validate call for you.
+    step Model(Song, :new) # FIXME.
+    step Contract::Validate(constant: Schema, key: :song) # generic validate call for you.
   end
 
   # success
-  it { OpWithSchema.(params: {song: { title: "SVG" }}).success?.must_equal true }
+  it { _(OpWithSchema.(params: {song: {title: "SVG"}}).success?).must_equal true }
   # failure
-  it { OpWithSchema.(params: {song: { title: nil }}).success?.must_equal false }
+  it { _(OpWithSchema.(params: {song: {title: nil}}).success?).must_equal false }
   it "shows error messages" do
-    result = OpWithSchema.(params: {song: { title: nil }})
+    result = OpWithSchema.(params: {song: {title: nil}})
 
-    result[:"result.contract.default"].errors.inspect.must_equal %{#<Dry::Validation::MessageSet messages=[#<Dry::Schema::Message text=\"must be filled\" path=[:title] predicate=:filled? input=nil>] options={:source=>[#<Dry::Schema::Message text=\"must be filled\" path=[:title] predicate=:filled? input=nil>], :hints=>false}>}
+    _(result[:"result.contract.default"].errors.inspect).must_equal %{#<Dry::Validation::MessageSet messages=[#<Dry::Schema::Message text=\"must be filled\" path=[:title] predicate=:filled? input=nil>] options={:source=>[#<Dry::Schema::Message text=\"must be filled\" path=[:title] predicate=:filled? input=nil>], :hints=>false}>}
   end
   # key not found
-  it { OpWithSchema.(params: {}).success?.must_equal false }
+  it { _(OpWithSchema.(params: {}).success?).must_equal false }
 end
 
 class DocContractBuilderTest < Minitest::Spec
   Song = Struct.new(:id, :title)
   #---
   #- builder:
-  #:builder-option
+  # :builder-option
   class Create < Trailblazer::Operation
-
     class MyContract < Reform::Form
       property :title
       property :current_user, virtual: true
@@ -559,25 +704,37 @@ class DocContractBuilderTest < Minitest::Spec
 
       def current_user?
         return true if defined?(current_user)
+
         false
       end
     end
 
-    step Model( Song, :new )
-    step Contract::Build( constant: MyContract, builder: :default_contract! )
+    step Model(Song, :new)
+    step Contract::Build(constant: MyContract, builder: :default_contract!)
     step Contract::Validate()
-    step Contract::Persist( method: :sync )
+    step Contract::Persist(method: :sync)
 
     def default_contract!(options, constant:, model:, **)
       constant.new(model, current_user: options [:current_user])
     end
   end
-  #:builder-option end
+  # :builder-option end
 
-  it { Create.(params: {}).inspect(:model).must_equal %{<Result:false [#<struct DocContractBuilderTest::Song id=nil, title=nil>] >} }
-  it { Create.(params: { title: "title"}, current_user: Module).inspect(:model).must_equal %{<Result:true [#<struct DocContractBuilderTest::Song id=nil, title="title">] >} }
+  it {
+    _(Create.(params: {}).inspect(:model)).must_equal %{<Result:false [#<struct DocContractBuilderTest::Song id=nil, title=nil>] >}
+  }
+  it {
+    _(
+      Create.(
+        params:       {title: "title"},
+        current_user: Module
+      ).inspect(:model)
+    ).must_equal %{<Result:true [#<struct DocContractBuilderTest::Song id=nil, title="title">] >}
+  }
   # internal variables from {:builder} are excluded in public ctx.
-  it { Create.(params: {}).keys.inspect.must_equal %{[:params, :model, :\"result.model\", :\"contract.default\", :\"contract.default.params\", :\"representer.default.class\", :\"result.contract.default\"]} }
+  it {
+    _(Create.(params: {}).keys.inspect).must_equal %{[:params, :model, :\"result.model\", :\"contract.default\", :\"contract.default.params\", :\"representer.default.class\", :\"result.contract.default\"]}
+  }
 end
 
 class DocContractTest < Minitest::Spec
@@ -589,14 +746,23 @@ class DocContractTest < Minitest::Spec
       property :title
     end
 
-    step Model( Song, :new )
-    step Contract::Build(constant: MyContract)            # resolves to "contract.class.default" and is resolved at runtime.
+    step Model(Song, :new)
+    step Contract::Build(constant: MyContract) # resolves to "contract.class.default" and is resolved at runtime.
     step Contract::Validate()
-    step Contract::Persist( method: :sync )
+    step Contract::Persist(method: :sync)
   end
 
-  it { Block.(params: {}).inspect(:model).must_equal %{<Result:true [#<struct DocContractTest::Song id=nil, title=nil>] >} }
-  it { Block.(params: { id:1, title: "Fame" }).inspect(:model).must_equal %{<Result:true [#<struct DocContractTest::Song id=nil, title="Fame">] >} }
+  it { _(Block.(params: {}).inspect(:model)).must_equal %{<Result:true [#<struct DocContractTest::Song id=nil, title=nil>] >} }
+  it {
+    _(
+      Block.(
+        params: {
+          id:    1,
+          title: "Fame"
+        }
+      ).inspect(:model)
+    ).must_equal %{<Result:true [#<struct DocContractTest::Song id=nil, title="Fame">] >}
+  }
 
   class Breach < Block
     class MyContract < MyContract
@@ -606,7 +772,16 @@ class DocContractTest < Minitest::Spec
     step Contract::Build(constant: MyContract), replace: "contract.build"
   end
 
-  it { Breach.(params: { id:1, title: "Fame" }).inspect(:model).must_equal %{<Result:true [#<struct DocContractTest::Song id=1, title="Fame">] >} }
+  it {
+    _(
+      Breach.(
+        params: {
+          id:    1,
+          title: "Fame"
+        }
+      ).inspect(:model)
+    ).must_equal %{<Result:true [#<struct DocContractTest::Song id=1, title="Fame">] >}
+  }
 
   #-
   # with constant.
@@ -618,7 +793,16 @@ class DocContractTest < Minitest::Spec
     step Contract::Build(constant: MyContract), replace: "contract.build"
   end
 
-  it { Break.(params: { id:1, title: "Fame" }).inspect(:model).must_equal %{<Result:true [#<struct DocContractTest::Song id=1, title=nil>] >} }
+  it {
+    _(
+      Break.(
+        params: {
+          id:    1,
+          title: "Fame"
+        }
+      ).inspect(:model)
+    ).must_equal %{<Result:true [#<struct DocContractTest::Song id=1, title=nil>] >}
+  }
 end
 
 class ModelMissingTest < Minitest::Spec
@@ -633,7 +817,7 @@ class ModelMissingTest < Minitest::Spec
 
   it do
     result = Create.(params: {duration: 18})
-    assert_equal true, result.success?
+    assert result.success?
     assert_equal 18, result[:"contract.default"].duration
   end
 end

@@ -5,7 +5,8 @@ module Trailblazer
       # result.contract.errors = {..}
       # Deviate to left track if optional key is not found in params.
       # Deviate to left if validation result falsey.
-      def self.Validate(skip_extract: false, name: "default", representer: false, key: nil, constant: nil, invalid_data_terminus: false) # DISCUSS: should we introduce something like Validate::Deserializer?
+      # DISCUSS: should we introduce something like Validate::Deserializer?
+      def self.Validate(skip_extract: false, name: "default", representer: false, key: nil, constant: nil, invalid_data_terminus: false)
         contract_path = :"contract.#{name}" # the contract instance
         params_path   = :"contract.#{name}.params" # extract_params! save extracted params here.
         key_path      = :"contract.#{name}.extract_key"
@@ -16,11 +17,17 @@ module Trailblazer
         # These are defaulting dependency injection, more here
         # https://trailblazer.to/2.1/docs/activity.html#activity-dependency-injection-inject-defaulting
         extract_injections  = {key_path => ->(*) { key }} # default to {key} if not injected.
-        validate_injections = {contract_path => ->(*) { constant }} # default the contract instance to {constant}, if not injected (or passed down from {Build()})
+        validate_injections = {
+          contract_path => ->(*) {
+            constant
+          }
+        } # default the contract instance to {constant}, if not injected (or passed down from {Build()})
 
         # Build a simple Railway {Activity} for the internal flow.
         activity = Class.new(Activity::Railway(name: "Contract::Validate")) do
-          step extract,  id: "#{params_path}_extract", Output(:failure) => End(:extract_failure), inject: [extract_injections] unless skip_extract# || representer
+          unless skip_extract
+            step extract, id: "#{params_path}_extract", Output(:failure) => End(:extract_failure), inject: [extract_injections]
+          end
           step validate, id: "contract.#{name}.call", inject: [validate_injections]
         end
 
@@ -40,7 +47,8 @@ module Trailblazer
         # Task: extract the contract's input from params by reading `:key`.
         class Extract
           def initialize(key_path: nil, params_path: nil)
-            @key_path, @params_path = key_path, params_path
+            @key_path = key_path
+            @params_path = params_path
           end
 
           def call(ctx, params: {}, **)
@@ -49,8 +57,11 @@ module Trailblazer
           end
         end
 
-        def initialize(name: "default", representer: false, params_path: nil, contract_path: )
-          @name, @representer, @params_path, @contract_path = name, representer, params_path, contract_path
+        def initialize(contract_path:, name: "default", representer: false, params_path: nil)
+          @name = name
+          @representer = representer
+          @params_path = params_path
+          @contract_path = contract_path
         end
 
         # Task: Validates contract `:name`.
@@ -66,20 +77,21 @@ module Trailblazer
           contract = ctx[@contract_path] # grab contract instance from "contract.default" (usually set in {Contract::Build()})
 
           # this is for 1.1-style compatibility and should be removed once we have Deserializer in place:
-          ctx[:"result.#{@contract_path}"] = result =
-            if representer
-              # use :document as the body and let the representer deserialize to the contract.
-              # this will be simplified once we have Deserializer.
-              # translates to contract.("{document: bla}") { MyRepresenter.new(contract).from_json .. }
-              contract.(ctx[from]) { |document| representer.new(contract).parse(document) }
-            else
-              # let Reform handle the deserialization.
-              contract.(ctx[params_path])
-            end
+          ctx[:"result.#{@contract_path}"] = result = if representer
+                                                        # use :document as the body and let the representer deserialize to the contract.
+                                                        # this will be simplified once we have Deserializer.
+                                                        # translates to contract.("{document: bla}") { MyRepresenter.new(contract).from_json .. }
+                                                        contract.(ctx[from]) do |document|
+                                                          representer.new(contract).parse(document)
+                                                        end
+                                                      else
+                                                        # let Reform handle the deserialization.
+                                                        contract.(ctx[params_path])
+                                                      end
 
           result.success?
         end
       end
     end
-  end # Macro
+  end
 end

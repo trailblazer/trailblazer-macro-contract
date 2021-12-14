@@ -1,8 +1,8 @@
-$LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
+$LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 require "trailblazer-macro-contract"
 
 require "pp"
-require 'delegate'
+require "delegate"
 require "trailblazer/operation"
 require "trailblazer/developer"
 require "trailblazer/macro"
@@ -28,12 +28,13 @@ module Test
       includer._insert :_insert, ReturnResult, {replace: Trailblazer::Operation::Result::Build}, ReturnResult, ""
     end
   end
-  ReturnResult = ->(last, input, options) { input }
+  ReturnResult = ->(_last, input, _options) { input }
 end
 
 Memo = Struct.new(:id, :body) do
   def self.find(id)
     return new(id, "Yo!") if id
+
     nil
   end
 end

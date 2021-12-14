@@ -5,7 +5,8 @@ module Trailblazer
     # This Circuit-task calls the {task} Option, then allows
     # to run an arbitary block to process the option's result.
     # @private
-    class CircuitTaskWithResultProcessing < Activity::TaskBuilder::Task # DISCUSS: extract to public?
+    # DISCUSS: extract to public?
+    class CircuitTaskWithResultProcessing < Activity::TaskBuilder::Task
       def initialize(task, user_proc, block)
         @block = block
         super(task, user_proc)
@@ -34,7 +35,7 @@ module Trailblazer
         default_contract_builder = ->(ctx, model: nil, **) { ctx[:"#{contract_path}.class"].new(model) }
 
         # proc is called via {Option()}.
-        task_option_proc = builder ? builder : default_contract_builder
+        task_option_proc = builder || default_contract_builder
 
         # after the builder proc is run, assign its result to {:"contract.default"}.
         ctx_assign_block = ->(result, ctx) { ctx[contract_path] = result }
