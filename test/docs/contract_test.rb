@@ -517,30 +517,47 @@ class DryValidationContractTest < Minitest::Spec
   it { Create.(params: { id: 1, title: "Y" }).inspect(:model).must_equal %{<Result:false [#<struct DryValidationContractTest::Song id=nil, title=nil>] >} }
   it { Create.(params: { id: 1, title: "Yo" }).inspect(:model).must_equal %{<Result:true [#<struct DryValidationContractTest::Song id=1, title="Yo">] >} }
 
-  #---
+  ##---
   # Contract::Validate(constant: DrySchema)
-  class OpWithSchema < Trailblazer::Operation
-    Schema = Dry::Validation.Contract do
-      params do
-        required(:title).filled
-      end
-    end
 
-    step Model( Song, :new ) # FIXME.
-    step Contract::Validate( constant: Schema, key: :song) # generic validate call for you.
+  #:dry-schema-contract
+  module Song::Operation
+    class Archive < Trailblazer::Operation
+      Schema = Dry::Validation.Contract do
+        params do
+          required(:id).filled
+        end
+      end
+
+      # step Model(Song, :new)                              # You don't need {ctx[:model]}.
+      step Contract::Validate(constant: Schema, key: :song) # Your validation.
+      #~methods
+      # step Contract::Persist()                            # this is not possible!
+      #~methods end
+    end
   end
+  #:dry-schema-contract end
 
   # success
-  it { OpWithSchema.(params: {song: { title: "SVG" }}).success?.must_equal true }
+  it { _(Song::Operation::Archive.(params: {song: {id: "SVG"}}).success?).must_equal true }
   # failure
-  it { OpWithSchema.(params: {song: { title: nil }}).success?.must_equal false }
+  it { _(Song::Operation::Archive.(params: {song: {id: nil}}).success?).must_equal false }
+  # shows error messages
   it "shows error messages" do
-    result = OpWithSchema.(params: {song: { title: nil }})
+    #:dry-contract-call
+    result = Song::Operation::Archive.(params: {song: {id: nil}})
+    #:dry-contract-call end
 
-    result[:"result.contract.default"].errors.inspect.must_equal %{#<Dry::Validation::MessageSet messages=[#<Dry::Schema::Message text=\"must be filled\" path=[:title] predicate=:filled? input=nil>] options={:source=>[#<Dry::Schema::Message text=\"must be filled\" path=[:title] predicate=:filled? input=nil>], :hints=>false}>}
+    _(result[:"result.contract.default"].errors.inspect).must_equal %{#<Dry::Validation::MessageSet messages=[#<Dry::Schema::Message text=\"must be filled\" path=[:id] predicate=:filled? input=nil>] options={:source=>[#<Dry::Schema::Message text=\"must be filled\" path=[:id] predicate=:filled? input=nil>], :hints=>false}>}
+
+    # raise result[:"result.contract.default"].errors.messages[0].to_s.inspect
+    assert_equal result[:"result.contract.default"].errors[:id].inspect, %{["must be filled"]}
+    #:dry-contract-result
+    result[:"result.contract.default"].errors[:id] #=> ["must be filled"]
+    #:dry-contract-result end
   end
   # key not found
-  it { OpWithSchema.(params: {}).success?.must_equal false }
+  it { _(Song::Operation::Archive.(params: {}).success?).must_equal false }
 end
 
 class DocContractBuilderTest < Minitest::Spec
