@@ -32,5 +32,5 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency "trailblazer-activity-dsl-linear", ">= 0.5.0", "< 0.6.0"
 
-  spec.required_ruby_version = ">= 2.6.0"
+  spec.required_ruby_version = ">= 2.0.0"
 end
