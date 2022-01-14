@@ -555,9 +555,37 @@ class DryValidationContractTest < Minitest::Spec
     #:dry-contract-result
     result[:"result.contract.default"].errors[:id] #=> ["must be filled"]
     #:dry-contract-result end
+
+
   end
   # key not found
   it { _(Song::Operation::Archive.(params: {}).success?).must_equal false }
+
+  module A
+    class Song < DryValidationContractTest::Song
+    end
+    module Song::Operation
+      class Archive < Trailblazer::Operation
+        Schema = Dry::Validation.Contract do
+          params do
+            required(:id).filled
+          end
+        end
+
+        # step Model(Song, :new)                              # You don't need {ctx[:model]}.
+        step Contract::Validate(constant: Schema, key: :song, errors: true) # Your validation.
+        #~methods
+        # step Contract::Persist()                            # this is not possible!
+        #~methods end
+      end
+    end
+  end
+
+# {:errors} object is accessable
+  it do
+    result = A::Song::Operation::Archive.(params: {song: {id: nil}})
+    assert_equal result[:errors].messages.inspect, %{{:id=>[\"must be filled\"]}}
+  end
 end
 
 class DocContractBuilderTest < Minitest::Spec

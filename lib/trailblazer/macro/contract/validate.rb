@@ -5,7 +5,7 @@ module Trailblazer
       # result.contract.errors = {..}
       # Deviate to left track if optional key is not found in params.
       # Deviate to left if validation result falsey.
-      def self.Validate(skip_extract: false, name: "default", representer: false, key: nil, constant: nil, invalid_data_terminus: false) # DISCUSS: should we introduce something like Validate::Deserializer?
+      def self.Validate(skip_extract: false, name: "default", representer: false, key: nil, constant: nil, invalid_data_terminus: false, errors: nil) # DISCUSS: should we introduce something like Validate::Deserializer?
         contract_path = :"contract.#{name}" # the contract instance
         params_path   = :"contract.#{name}.params" # extract_params! save extracted params here.
         key_path      = :"contract.#{name}.extract_key"
@@ -27,6 +27,8 @@ module Trailblazer
         options = activity.Subprocess(activity)
         options = options.merge(id: "contract.#{name}.validate")
 
+        options = options.merge(output: Errors.Output(result_path: "result.contract.#{name}", path: "contract.#{name}"), output_with_outer_ctx: true) if errors # TODO: what if we have {:output} already set?
+
         # Deviate End.extract_failure to the standard failure track as a default. This can be changed from the user side.
         options = options.merge(activity.Output(:extract_failure) => activity.Track(:failure)) unless skip_extract
 
@@ -36,8 +38,28 @@ module Trailblazer
         options
       end
 
+      require "trailblazer/errors"
+      module Errors # FIXME: move somewhere else!
+        def self.Output(result_path:, path:)
+          ->(inner_ctx, outer_ctx, **) do
+            errors = outer_ctx[:errors] || Trailblazer::Errors.new # FIXME: make this better, don't instantiate here or warn or whatever?!
+
+            result = inner_ctx[result_path]
+
+            errors = errors.merge!(result)
+
+            {errors: errors}
+          end #->
+        end
+      end
+
       class Validate
-        # Task: extract the contract's input from params by reading `:key`.
+        # Extract the contract's input from {params} by reading the hash under {:key}.
+        # Example:
+        #   key #=> :song
+        #   ctx[:params] #=> {song: {title: "Stranded"}}
+        #
+        #  The extracted hash will be `{title: "Stranded"}`.
         class Extract
           def initialize(key_path: nil, params_path: nil)
             @key_path, @params_path = key_path, params_path
