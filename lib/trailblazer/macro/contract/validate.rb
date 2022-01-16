@@ -46,7 +46,7 @@ module Trailblazer
 
             result = inner_ctx[result_path]
 
-            errors = errors.merge!(result)
+            errors = errors.merge_result!(result, path: path)
 
             {errors: errors}
           end #->

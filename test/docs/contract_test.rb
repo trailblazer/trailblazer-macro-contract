@@ -583,8 +583,12 @@ class DryValidationContractTest < Minitest::Spec
 
 # {:errors} object is accessable
   it do
+    # TODO: what if there are no errors?
+    # TODO: merge/allow access to different contracts' results
     result = A::Song::Operation::Archive.(params: {song: {id: nil}})
     assert_equal result[:errors].messages.inspect, %{{:id=>[\"must be filled\"]}}
+
+    assert_equal result[:errors].results["contract.default"].to_h, {:id=>nil} # test if results is the native {Dry:::Result}/
   end
 end
 
