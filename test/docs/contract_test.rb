@@ -578,6 +578,24 @@ class DryValidationContractTest < Minitest::Spec
         # step Contract::Persist()                            # this is not possible!
         #~methods end
       end
+
+      class Delete < Trailblazer::Operation
+        IdValidation = Dry::Validation.Contract do
+          params do
+            required(:id).filled
+          end
+        end
+
+        CurrentUserValidation = Dry::Validation.Contract do
+          params do
+            required(:current_user).filled
+          end
+        end
+
+        # step Model(Song, :new)                              # You don't need {ctx[:model]}.
+        step Contract::Validate(constant: IdValidation, key: :song, errors: true)
+        fail Contract::Validate(constant: CurrentUserValidation, errors: true, name: "user")
+      end
     end
   end
 
@@ -588,7 +606,14 @@ class DryValidationContractTest < Minitest::Spec
     result = A::Song::Operation::Archive.(params: {song: {id: nil}})
     assert_equal result[:errors].messages.inspect, %{{:id=>[\"must be filled\"]}}
 
-    assert_equal result[:errors].results["contract.default"].to_h, {:id=>nil} # test if results is the native {Dry:::Result}/
+    assert_equal result[:errors].results["contract.default"].messages.to_h, {:id=>["must be filled"]} # test if results is the native {Dry:::Result}/
+  end
+
+  it "supports multiple contracts" do
+    result = A::Song::Operation::Delete.(params: {song: {id: nil}})
+
+# pp result[:errors]
+    assert_equal result[:errors].results["contract.user"].messages.to_h, {:current_user=>["is missing"]} # test if results is the native {Dry:::Result}/
   end
 end
 
