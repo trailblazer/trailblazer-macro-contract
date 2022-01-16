@@ -613,6 +613,8 @@ class DryValidationContractTest < Minitest::Spec
     result = A::Song::Operation::Delete.(params: {song: {id: nil}})
 
 # pp result[:errors]
+    # errors are merged:
+    assert_equal result[:errors].messages.inspect, %{{:current_user=>[\"is missing\"], :id=>[\"must be filled\"]}}
     assert_equal result[:errors].results["contract.user"].messages.to_h, {:current_user=>["is missing"]} # test if results is the native {Dry:::Result}/
   end
 end
