@@ -599,12 +599,16 @@ class DryValidationContractTest < Minitest::Spec
     end
   end
 
-# {:errors} object is accessable
-  it do
+## {:errors} object is accessable
+## {:"result.contract.default"} is accessable
+  it "{:errors} and other variables from Validate() are accessable" do
     # TODO: what if there are no errors?
     # TODO: merge/allow access to different contracts' results
     result = A::Song::Operation::Archive.(params: {song: {id: nil}})
     assert_equal result[:errors].messages.inspect, %{{:id=>[\"must be filled\"]}}
+
+    assert_equal result[:"result.contract.default"].success?, false
+
 
     assert_equal result[:errors].results["contract.default"].messages.to_h, {:id=>["must be filled"]} # test if results is the native {Dry:::Result}/
   end
@@ -616,6 +620,34 @@ class DryValidationContractTest < Minitest::Spec
     # errors are merged:
     assert_equal result[:errors].messages.inspect, %{{:current_user=>[\"is missing\"], :id=>[\"must be filled\"]}}
     assert_equal result[:errors].results["contract.user"].messages.to_h, {:current_user=>["is missing"]} # test if results is the native {Dry:::Result}/
+  end
+
+# {errors: true} allows using {Out()} and {:output}.
+  module AA
+    class Song < DryValidationContractTest::Song; end
+
+    module Song::Operation
+      class Archive < Trailblazer::Operation
+        Schema = A::Song::Operation::Archive::Schema
+
+        step Contract::Validate(constant: Schema, key: :song, errors: true),
+          # Out(hard_delete_source: true) => {:errors => :dry_errors}
+          Out() => {:errors => :dry_errors},
+          Out(delete: true) => [:errors]
+
+          # retrieve the {merged_ctx} that is being populated by the {Out()} filters.
+          # Out(with_merged_ctx: true) => ->(ctx, merged_ctx, **) {  raise merged_ctx[:errors].inspect; {hello: true} }
+      end
+    end
+  end
+# TODO: test if injection of contract.class etc work with :errors
+
+## we can rename {:errors => :dry_errors} and then delete {:errors} from the outgoing ctx.
+  it do
+    result = AA::Song::Operation::Archive.wtf?(params: {song: {id: nil}})
+    # assert_equal result[:hello], true
+    assert_nil result[:errors]
+    assert_equal result[:dry_errors].messages.inspect, %{{:id=>[\"must be filled\"]}}
   end
 end
 

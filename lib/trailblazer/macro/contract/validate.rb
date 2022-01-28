@@ -13,7 +13,7 @@ module Trailblazer
         extract  = Validate::Extract.new(key_path: key_path, params_path: params_path)
         validate = Validate.new(name: name, representer: representer, params_path: params_path, contract_path: contract_path)
 
-        # These are defaulting dependency injection, more here
+        # These are defaulting dependency injections, more here
         # https://trailblazer.to/2.1/docs/activity.html#activity-dependency-injection-inject-defaulting
         extract_injections  = {key_path => ->(*) { key }} # default to {key} if not injected.
         validate_injections = {contract_path => ->(*) { constant }} # default the contract instance to {constant}, if not injected (or passed down from {Build()})
@@ -27,7 +27,16 @@ module Trailblazer
         options = activity.Subprocess(activity)
         options = options.merge(id: "contract.#{name}.validate")
 
-        options = options.merge(output: Errors.Output(result_path: "result.contract.#{name}", path: "contract.#{name}"), output_with_outer_ctx: true) if errors # TODO: what if we have {:output} already set?
+        if errors # TODO: what if we have {:output} already set?
+          activity.send :fail, Errors.MergeErrors(result_path: "result.contract.#{name}", path: "contract.#{name}"), id: "contract.#{name}.merge_errors" # add another user-space step # FIXME: do we want that? should that be a taskWrap step instead?
+
+
+          options = options.merge(
+            # activity.Input() => Errors.Input(),
+            inject: [{:errors => ->(*) {Trailblazer::Errors.new} }], # FIXME: make this better, don't instantiate here or warn or whatever?!
+            activity.Out() => Errors.Output(result_path: "result.contract.#{name}", path: "contract.#{name}")
+          )
+        end
 
         # Deviate End.extract_failure to the standard failure track as a default. This can be changed from the user side.
         options = options.merge(activity.Output(:extract_failure) => activity.Track(:failure)) unless skip_extract
@@ -41,16 +50,36 @@ module Trailblazer
       require "trailblazer/errors"
       module Errors # FIXME: move somewhere else!
         def self.Output(result_path:, path:)
-          ->(inner_ctx, outer_ctx, **) do
-            errors = outer_ctx[:errors] || Trailblazer::Errors.new # FIXME: make this better, don't instantiate here or warn or whatever?!
+          return [:errors, result_path]
 
-            result = inner_ctx[result_path]
+          # ->(inner_ctx, outer_ctx, **) do # TODO: do we need {outer_ctx}?
+          #   # we retrieve {:errors} from the pipe ctx because it's injected.
+          #   errors = inner_ctx[:errors]
+
+          #   result = inner_ctx[result_path]
+
+          #   errors = errors.merge_result!(result, path: path)
+
+          #   {errors: errors, result_path => result}  # DISCUSS: this "moves" errors from wrapped to mutable and makes it a "new" variable that's being copied if not configured otherwise.
+          # end #->
+        end
+
+        # Activity step to merge errors.
+        # FIXME: WIP
+        def self.MergeErrors(result_path:, path:)
+          ->(ctx, errors:, **) do
+            result = ctx[result_path]
 
             errors = errors.merge_result!(result, path: path)
 
-            {errors: errors}
+            ctx[:errors] = errors # this doesn't override but shadow the outer errors as we are in a scoped OP here.
           end #->
         end
+
+        # def self.Input()
+
+        #   ->(ctx, **) { {errors: ctx[:errors] || Trailblazer::Errors.new}  }
+        # end
       end
 
       class Validate
