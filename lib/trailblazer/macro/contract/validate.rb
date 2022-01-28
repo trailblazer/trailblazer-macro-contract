@@ -20,8 +20,8 @@ module Trailblazer
 
         # Build a simple Railway {Activity} for the internal flow.
         activity = Class.new(Activity::Railway(name: "Contract::Validate")) do
-          step extract,  id: "#{params_path}_extract", Output(:failure) => End(:extract_failure), inject: [extract_injections] unless skip_extract# || representer
-          step validate, id: "contract.#{name}.call", inject: [validate_injections]
+          step extract,  id: "#{params_path}_extract", Output(:failure) => End(:extract_failure), Activity::Railway.Inject() => extract_injections unless skip_extract# || representer
+          step validate, id: "contract.#{name}.call", Activity::Railway.Inject() => validate_injections
         end
 
         options = activity.Subprocess(activity)
@@ -33,7 +33,7 @@ module Trailblazer
 
           options = options.merge(
             # activity.Input() => Errors.Input(),
-            inject: [{:errors => ->(*) {Trailblazer::Errors.new} }], # FIXME: make this better, don't instantiate here or warn or whatever?!
+            activity.Inject() => {:errors => ->(*) {Trailblazer::Errors.new}}, # FIXME: make this better, don't instantiate here or warn or whatever?!
             activity.Out() => Errors.Output(result_path: "result.contract.#{name}", path: "contract.#{name}")
           )
         end
