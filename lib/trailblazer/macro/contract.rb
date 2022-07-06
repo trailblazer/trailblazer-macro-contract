@@ -13,7 +13,5 @@ module Trailblazer
 
   # All macros sit in the {Trailblazer::Macro::Contract} namespace, where we forward calls from
   # operations and activities to.
-  module Activity::DSL::Linear::Helper
-    Contract = Macro::Contract
-  end
+  Activity::DSL::Linear::Helper::Constants::Contract = Macro::Contract
 end
