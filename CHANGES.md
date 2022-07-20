@@ -1,3 +1,8 @@
+# 2.1.3
+
+* Use `trailblazer-activity-dsl-linear` >= 1.0.0.
+* Use Inject() API instead of `:inject`, `:input` etc in macros.
+
 # 2.1.2
 
 * Refactor `Contract::Build` to use TRB mechanics:
