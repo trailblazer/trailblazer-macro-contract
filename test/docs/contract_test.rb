@@ -294,7 +294,7 @@ class DocsContractInjectedKeyTest < Minitest::Spec
       "contract.default.extract_key": "song"
     )
     #:inject-key-call end
-    .inspect(:model).must_equal %{<Result:true [#<struct DocsContractInjectedKeyTest::Song title=\"SVG\", length=13>] >} }
+    res.inspect(:model).must_equal %{<Result:true [#<struct DocsContractInjectedKeyTest::Song title=\"SVG\", length=13>] >} }
 end
 
 #---
