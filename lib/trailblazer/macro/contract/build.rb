@@ -22,14 +22,24 @@ module Trailblazer
       def self.Build(name: "default", constant: nil, builder: nil)
         contract_path     = :"contract.#{name}"
 
-        build_injections  = {"#{contract_path}.class": ->(*) { constant }} # default to {constant} if not injected.
+        injections = {
+          Activity::Railway.Inject() => {
+            "#{contract_path}.class": ->(*) { constant } # default to {constant} if not injected.
+          }
+        }
 
-        input = ->(ctx, **) do
-          ctx.to_hash.merge(
-            constant: constant,
-            name:     contract_path
-          )
-        end
+        input = {
+          Activity::Railway.In() => ->(ctx, **) do
+            ctx.to_hash.merge(
+              constant: constant,
+              name:     contract_path
+            )
+          end
+        }
+
+        output = {
+          Activity::Railway.Out() => [contract_path]
+        }
 
         default_contract_builder = ->(ctx, model: nil, **) { ctx[:"#{contract_path}.class"].new(model) }
 
@@ -43,10 +53,10 @@ module Trailblazer
 
         {
           task:   task, id: "contract.build",
-          inject: [build_injections],
-          input:  input,
-          output: [contract_path]
-        }
+        }.
+          merge(injections).
+          merge(input).
+          merge(output)
       end
 
       module DSL
