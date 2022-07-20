@@ -24,10 +24,11 @@ module Trailblazer
 
         injections = {
           Activity::Railway.Inject() => {
-            "#{contract_path}.class": ->(*) { constant } # default to {constant} if not injected.
+            "#{contract_path}.class": ->(*) { constant }, # default to {constant} if not injected.
           }
         }
 
+        # DISCUSS: can we force-default this via Inject()?
         input = {
           Activity::Railway.In() => ->(ctx, **) do
             ctx.to_hash.merge(
