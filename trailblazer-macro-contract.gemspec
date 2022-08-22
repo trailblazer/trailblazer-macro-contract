@@ -30,7 +30,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "minitest"
   spec.add_development_dependency "rake"
 
-  spec.add_dependency "trailblazer-activity-dsl-linear", ">= 1.0.0.beta1", "< 1.1.0"
+  spec.add_dependency "trailblazer-activity-dsl-linear", ">= 1.0.0", "< 1.1.0"
 
   spec.required_ruby_version = ">= 2.0.0"
 end
