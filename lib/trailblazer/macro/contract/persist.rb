@@ -5,7 +5,7 @@ module Trailblazer
         path = :"contract.#{name}"
         step = ->(options, **) { options[path].send(method) }
 
-        task = Activity::TaskBuilder::Binary(step)
+        task = Activity::Circuit::TaskAdapter.for_step(step)
 
         {task: task, id: "persist.save"}
       end

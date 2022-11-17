@@ -2,22 +2,6 @@ require "reform"
 
 module Trailblazer
   module Macro
-    # This Circuit-task calls the {task} Option, then allows
-    # to run an arbitary block to process the option's result.
-    # @private
-    class CircuitTaskWithResultProcessing < Activity::TaskBuilder::Task # DISCUSS: extract to public?
-      def initialize(task, user_proc, block)
-        @block = block
-        super(task, user_proc)
-      end
-
-      def call_option(task_with_option_interface, (ctx, flow_options), **circuit_options)
-        result = super
-
-        @block.call(result, ctx)
-      end
-    end
-
     module Contract
       def self.Build(name: "default", constant: nil, builder: nil)
         contract_path     = :"contract.#{name}"
@@ -48,9 +32,7 @@ module Trailblazer
         task_option_proc = builder ? builder : default_contract_builder
 
         # after the builder proc is run, assign its result to {:"contract.default"}.
-        ctx_assign_block = ->(result, ctx) { ctx[contract_path] = result }
-
-        task = CircuitTaskWithResultProcessing.new(Trailblazer::Option(task_option_proc), task_option_proc, ctx_assign_block)
+        task = Macro.task_adapter_for_decider(task_option_proc, variable_name: contract_path)
 
         {
           task:   task, id: "contract.build",
