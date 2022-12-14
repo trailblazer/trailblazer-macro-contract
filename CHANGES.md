@@ -1,3 +1,7 @@
+# 2.1.4
+
+* Use `trailblazer-activity-dsl-linear` 1.1.0.
+
 # 2.1.3
 
 * Use `trailblazer-activity-dsl-linear` >= 1.0.0.
