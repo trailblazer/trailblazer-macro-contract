@@ -27,17 +27,17 @@ module Trailblazer
         default_contract_builder = ->(ctx, model: nil, **) { ctx[:"#{contract_path}.class"].new(model) }
 
         # proc is called via {Option()}.
-        task_option_proc = builder ? builder : default_contract_builder
+        task_option_proc = builder || default_contract_builder
 
         # after the builder proc is run, assign its result to {:"contract.default"}.
         task = Macro.task_adapter_for_decider(task_option_proc, variable_name: contract_path)
 
         {
           task:   task, id: "contract.build",
-        }.
-          merge(injections).
-          merge(input).
-          merge(output)
+        }
+          .merge(injections)
+          .merge(input)
+          .merge(output)
       end
 
       module DSL

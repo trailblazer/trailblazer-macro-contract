@@ -22,12 +22,12 @@ module Trailblazer
             step extract,
               id: "#{params_path}_extract",
               Output(:failure) => End(:extract_failure),
-              Inject(key_path) => ->(*) { key }} # default to {key} if not injected.
+              Inject(key_path) => ->(*) { key } # default to {key} if not injected.
           end
 
           step validate,
             id: "contract.#{name}.call",
-            Inject(contract_path) => ->(*) { constant }} # default the contract instance to {constant}, if not injected (or passed down from {Build()})
+            Inject(contract_path) => ->(*) { constant } # default the contract instance to {constant}, if not injected (or passed down from {Build()})
         end
 
         options = activity.Subprocess(activity)
@@ -53,7 +53,7 @@ module Trailblazer
           end
         end
 
-        def initialize(name: "default", representer: false, params_path: nil, contract_path: )
+        def initialize(name: "default", contract_path:, representer: false, params_path: nil)
           @name, @representer, @params_path, @contract_path = name, representer, params_path, contract_path
         end
 
