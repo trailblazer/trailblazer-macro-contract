@@ -4,12 +4,10 @@ module Trailblazer
   module Macro
     module Contract
       def self.Build(name: "default", constant: nil, builder: nil)
-        contract_path     = :"contract.#{name}"
+        contract_path = :"contract.#{name}"
 
         injections = {
-          Activity::Railway.Inject() => {
-            "#{contract_path}.class": ->(*) { constant }, # default to {constant} if not injected.
-          }
+          Activity::Railway.Inject("#{contract_path}.class") => ->(*) { constant }, # default to {constant} if not injected.
         }
 
         # DISCUSS: can we force-default this via Inject()?

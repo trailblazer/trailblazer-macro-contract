@@ -15,13 +15,19 @@ module Trailblazer
 
         # These are defaulting dependency injection, more here
         # https://trailblazer.to/2.1/docs/activity.html#activity-dependency-injection-inject-defaulting
-        extract_injections  = {key_path => ->(*) { key }} # default to {key} if not injected.
-        validate_injections = {contract_path => ->(*) { constant }} # default the contract instance to {constant}, if not injected (or passed down from {Build()})
 
         # Build a simple Railway {Activity} for the internal flow.
         activity = Class.new(Activity::Railway(name: "Contract::Validate")) do
-          step extract,  id: "#{params_path}_extract", Output(:failure) => End(:extract_failure), Activity::Railway.Inject() => extract_injections unless skip_extract# || representer
-          step validate, id: "contract.#{name}.call", Activity::Railway.Inject() => validate_injections
+          unless skip_extract
+            step extract,
+              id: "#{params_path}_extract",
+              Output(:failure) => End(:extract_failure),
+              Inject(key_path) => ->(*) { key }} # default to {key} if not injected.
+          end
+
+          step validate,
+            id: "contract.#{name}.call",
+            Inject(contract_path) => ->(*) { constant }} # default the contract instance to {constant}, if not injected (or passed down from {Build()})
         end
 
         options = activity.Subprocess(activity)
@@ -31,9 +37,7 @@ module Trailblazer
         options = options.merge(activity.Output(:extract_failure) => activity.Track(:failure)) unless skip_extract
 
         # Halt failure track to End with {contract.name.invalid}.
-        options = options.merge(activity.Output(:failure) => activity.End(:invalid_data)) if invalid_data_terminus
-
-        options
+        options.merge(activity.Output(:failure) => activity.End(:invalid_data)) if invalid_data_terminus
       end
 
       class Validate

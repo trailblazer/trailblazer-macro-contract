@@ -3,11 +3,14 @@ module Trailblazer
     module Contract
       def self.Persist(method: :save, name: "default")
         path = :"contract.#{name}"
-        step = ->(options, **) { options[path].send(method) }
+        step = ->(ctx, **) { ctx[path].send(method) }
 
         task = Activity::Circuit::TaskAdapter.for_step(step)
 
-        {task: task, id: "persist.save"}
+        {
+          task: task,
+          id:   "persist.save"
+        }
       end
     end
   end
