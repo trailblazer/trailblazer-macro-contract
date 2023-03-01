@@ -4,8 +4,9 @@ require "trailblazer-macro-contract"
 require "pp"
 require 'delegate'
 require "trailblazer/operation"
-require "trailblazer/developer"
 require "trailblazer/macro"
+require "trailblazer/developer"
+# require "trailblazer/activity/testing"
 require "minitest/autorun"
 
 # TODO: convert tests to non-rails.
@@ -14,26 +15,13 @@ Reform::Form.class_eval do
   include Reform::Form::ActiveModel::Validations
 end
 
-module Mock
-  class Result
-    def initialize(bool); @bool = bool end
-    def success?; @bool end
-    def errors; ["hihi"] end
-  end
-end
-
-module Test
-  module ReturnCall
-    def self.included(includer)
-      includer._insert :_insert, ReturnResult, {replace: Trailblazer::Operation::Result::Build}, ReturnResult, ""
-    end
-  end
-  ReturnResult = ->(last, input, options) { input }
-end
-
 Memo = Struct.new(:id, :body) do
   def self.find(id)
     return new(id, "Yo!") if id
     nil
   end
 end
+
+# Minitest::Spec.class_eval do
+#   include Trailblazer::Activity::Testing::Assertions
+# end
