@@ -17,7 +17,7 @@ module Trailblazer
         # https://trailblazer.to/2.1/docs/activity.html#activity-dependency-injection-inject-defaulting
 
         # Build a simple Railway {Activity} for the internal flow.
-        activity = Class.new(Activity::Railway(name: "Contract::Validate")) do
+        activity = Activity::Railway(name: "Contract::Validate") do
           unless skip_extract
             step extract,
               id: "#{params_path}_extract",
@@ -31,13 +31,19 @@ module Trailblazer
         end
 
         options = activity.Subprocess(activity)
-        options = options.merge(id: "contract.#{name}.validate")
+        options.merge!(id: "contract.#{name}.validate")
 
         # Deviate End.extract_failure to the standard failure track as a default. This can be changed from the user side.
-        options = options.merge(activity.Output(:extract_failure) => activity.Track(:failure)) unless skip_extract
+        unless skip_extract
+          options.merge!(activity.Output(:extract_failure) => activity.Track(:failure))
+        end
 
         # Halt failure track to End with {contract.name.invalid}.
-        options.merge(activity.Output(:failure) => activity.End(:invalid_data)) if invalid_data_terminus
+        if invalid_data_terminus
+          options.merge!(activity.Output(:failure) => activity.End(:invalid_data))
+        end
+
+        options
       end
 
       class Validate

@@ -76,7 +76,7 @@ class ContractTest < Minitest::Spec
 
     #- overwriting Validate
     class NewHit < Upsert
-      step Contract::Validate( key: :hit ), override: true
+      step Contract::Validate(key: :hit), override: true
     end
 
     it { Trailblazer::Developer.railway(NewHit).must_equal %{[>model.build,>contract.build,>contract.default.validate,>persist.save]} }

@@ -308,10 +308,10 @@ class DocsContractKeyWithOutputTest < Minitest::Spec
 
   #:key-output
   class Song::Create < Trailblazer::Operation
-    step Model( Song, :new )
-    step Contract::Build( constant: Song::Contract::Create )
-    step Contract::Validate( key: "song" ), Output(:extract_failure) => End(:key_not_found)
-    step Contract::Persist( )
+    step Model(Song, :new)
+    step Contract::Build(constant: Song::Contract::Create)
+    step Contract::Validate(key: "song"), Output(:extract_failure) => End(:key_not_found)
+    step Contract::Persist()
   end
   #:key-output end
 
@@ -379,16 +379,17 @@ class DocsContractInvalidEndTest < Minitest::Spec
 
   #:invalid-end
   class Song::Create < Trailblazer::Operation
-    step Model( Song, :new )
-    step Contract::Build( constant: Song::Contract::Create )
-    step Contract::Validate( key: :song, invalid_data_terminus: true )
-    step Contract::Persist( )
+    step Model(Song, :new)
+    step Contract::Build(constant: Song::Contract::Create)
+    step Contract::Validate(key: :song, invalid_data_terminus: true)
+    step Contract::Persist()
   end
   #:invalid-end end
 
   it do
-    result = Song::Create.(params: {song: { title: nil, length: nil }})
-    result.event.inspect.must_equal %{#<Trailblazer::Activity::End semantic=:invalid_data>}
+    result = Song::Create.(params: {song: {title: nil, length: nil}})
+
+    assert_equal result.event.to_h[:semantic].inspect, %(:invalid_data)
   end
 
   it { Song::Create.(params: {song: { title: "SVG", length: 13 }}).inspect(:model).must_equal %{<Result:true [#<struct DocsContractInvalidEndTest::Song title=\"SVG\", length=13>] >} }
