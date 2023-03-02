@@ -23,14 +23,14 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "bundler"
   spec.add_development_dependency "dry-validation"
   spec.add_development_dependency "reform-rails", "~> 0.2.0.rc2"
-  spec.add_development_dependency "trailblazer-macro", ">= 2.1.12"
+  spec.add_development_dependency "trailblazer-macro"#, ">= 2.1.14"
   spec.add_development_dependency "trailblazer-developer"
   spec.add_development_dependency "activemodel", "~> 6.0.0" # FIXME: we still don't support the Rails 6.1 errors object.
 
   spec.add_development_dependency "minitest"
   spec.add_development_dependency "rake"
 
-  spec.add_dependency "trailblazer-activity-dsl-linear", ">= 1.1.0", "< 1.3.0"
+  spec.add_dependency "trailblazer-activity-dsl-linear", ">= 1.2.0", "< 1.3.0"
 
-  spec.required_ruby_version = ">= 2.0.0"
+  spec.required_ruby_version = ">= 2.5.0"
 end
