@@ -55,8 +55,10 @@ class DocsContractOverviewTest < Minitest::Spec
   end
 
   it "shows 2-level tracing" do
-    result = Create.trace( params: { length: "A" } )
-    result.wtf.gsub(/0x\w+/, "").must_equal %{DocsContractOverviewTest::Create
+    stack, _ = Trailblazer::Developer::Trace.(Create, [params: {length: "A"}] )
+    output = Trailblazer::Developer::Trace::Present.(stack)
+
+    output.gsub(/0x\w+/, "").must_equal %{DocsContractOverviewTest::Create
 |-- Start.default
 |-- model.build
 |-- contract.build
