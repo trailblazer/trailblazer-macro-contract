@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.email         = ["apotonick@gmail.com"]
   spec.description   = 'Operation macros for form objects'
   spec.summary       = 'Macros for form objects: Build, Validate, Persist'
-  spec.homepage      = "http://trailblazer.to"
+  spec.homepage      = "https://trailblazer.to"
   spec.license       = "LGPL-3.0"
 
   spec.files         = `git ls-files -z`.split("\x0").reject do |f|

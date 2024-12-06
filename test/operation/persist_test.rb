@@ -21,9 +21,9 @@ class PersistTest < Minitest::Spec
     step Model( Song, :new )
     step Contract::Build( constant: Form )
     step Contract::Validate()
-    fail Fail1
+    left Fail1
     step Contract::Persist()
-    fail Fail2
+    left Fail2
   end
 
   it { Create.(params: { title: "In Recital" })[:model].title.must_equal "In Recital" }

@@ -22,6 +22,11 @@ class ContractTest < Minitest::Spec
       ->(*) { validate(options["params"][:song]) } # <-- TODO
     end
 
+    class UpdateHit < Update
+      step Contract::Persist( method: :sync ), id: 'persist.syncer'
+      step Contract::Persist()
+    end
+
     # success
     it do
       result = Update.(params: {title: "SVG"})
@@ -36,6 +41,12 @@ class ContractTest < Minitest::Spec
       result.success?.must_equal false
       result[:"result.contract.default"].success?.must_equal false
       result[:"result.contract.default"].errors.messages.must_equal({:title=>["can't be blank"]})
+    end
+
+    # override id
+    it 'override id' do
+      railway = Trailblazer::Developer.railway(UpdateHit)
+      assert_equal railway, %([>model.build,>contract.build,>contract.default.validate,>persist.syncer,>persist.save])
     end
 
     #---
@@ -72,14 +83,14 @@ class ContractTest < Minitest::Spec
     class New < Upsert
     end
 
-    it { Trailblazer::Developer.railway(New).must_equal %{[>model.build,>contract.build,>contract.default.validate,>persist.save]} }
+    it { Trailblazer::Developer.railway(New).must_equal %{[>model.build,>contract.build,>contract.default.validate,>persist.sync]} }
 
     #- overwriting Validate
     class NewHit < Upsert
       step Contract::Validate(key: :hit), override: true
     end
 
-    it { Trailblazer::Developer.railway(NewHit).must_equal %{[>model.build,>contract.build,>contract.default.validate,>persist.save]} }
+    it { Trailblazer::Developer.railway(NewHit).must_equal %{[>model.build,>contract.build,>contract.default.validate,>persist.sync]} }
     it { NewHit.(params: {:hit => { title: "Hooray For Me" }}).inspect(:model).must_equal %{<Result:true [#<struct ContractTest::Song title=\"Hooray For Me\">] >} }
   end
 end

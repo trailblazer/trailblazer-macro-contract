@@ -6,10 +6,9 @@ module Trailblazer
         step = ->(ctx, **) { ctx[path].send(method) }
 
         task = Activity::Circuit::TaskAdapter.for_step(step)
-
         {
           task: task,
-          id:   "persist.save"
+          id: "persist.#{method}"
         }
       end
     end
