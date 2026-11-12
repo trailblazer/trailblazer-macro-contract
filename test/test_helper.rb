@@ -1,13 +1,8 @@
-$LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
-require "trailblazer-macro-contract"
-
-require "pp"
-require 'delegate'
-require "trailblazer/operation"
-require "trailblazer/macro"
-require "trailblazer/developer"
-# require "trailblazer/activity/testing"
 require "minitest/autorun"
+require "trailblazer/macro/contract"
+require "trailblazer/operation"
+require "trailblazer/developer"
+require "trailblazer/core"
 
 # TODO: convert tests to non-rails.
 require "reform/form/active_model/validations"
@@ -21,6 +16,36 @@ Memo = Struct.new(:id, :body) do
     nil
   end
 end
+
+# FIXME: who loads the macros where?
+# [Trailblazer::Operation].each do |topology|
+[Trailblazer::Activity::FastTrack,  # DISCUSS: remove?
+  Trailblazer::Operation # we need to add this because we're using :adds, so both normalizers get updated.
+].each do |topology|
+  _, _, builder, helpers_module = Trailblazer::Activity::DSL::Topology.build(
+    builder: topology.config.builder,
+    default_options: {},
+    **Trailblazer::Macro::Contract::TOPOLOGY_BUILD_OPTIONS # :helpers and :adds
+  )
+
+  topology.config.builder = builder
+  topology.include helpers_module
+end
+
+[Trailblazer::Activity::FastTrack,  # DISCUSS: remove?
+  Trailblazer::Operation # we need to add this because we're using :adds, so both normalizers get updated.
+].each do |topology|
+  _, _, builder, helpers_module = Trailblazer::Activity::DSL::Topology.build(
+    builder: topology.config.builder,
+    default_options: {},
+    **Trailblazer::Macro::TOPOLOGY_BUILD_OPTIONS # :helpers and :adds
+  )
+
+  topology.config.builder = builder
+  topology.include helpers_module
+end
+
+T = Trailblazer::Core
 
 # Minitest::Spec.class_eval do
 #   include Trailblazer::Activity::Testing::Assertions

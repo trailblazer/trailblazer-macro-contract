@@ -1,16 +1,18 @@
 module Trailblazer
   module Macro
     module Contract
-      def self.Persist(method: :save, name: "default")
-        path = :"contract.#{name}"
-        step = ->(ctx, **) { ctx[path].send(method) }
+      module Persist
+        def Persist(method: :save, name: "default")
+          path = :"contract.#{name}"
+          provider = ->(ctx, **) { ctx[path].send(method) }
 
-        task = Activity::Circuit::TaskAdapter.for_step(step)
+          node = Activity::Step.build(provider, binary: true)
 
-        {
-          task: task,
-          id:   "persist.save"
-        }
+          {
+            node_for_call_task: node,
+            id:   :"persist.save"
+          }
+        end
       end
     end
   end

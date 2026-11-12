@@ -16,15 +16,16 @@ class DocsContractOverviewTest < Minitest::Spec
     end
     #~contractonly end
 
-    step Model( Song, :new )
+    step Model(Song, :new)
     step Contract::Build(constant: MyContract)
     step Contract::Validate()
-    step Contract::Persist( method: :sync )
+    step Contract::Persist(method: :sync)
     #~contractonly end
   end
+  # pp Create.config.circuit.nodes["contract.build"]
   #:overv-reform end
 
-  puts Trailblazer::Developer.railway(Create, style: :rows)
+  # puts Trailblazer::Developer.railway(Create, style: :rows)
 
 =begin
   #:overv-reform-pipe
@@ -300,7 +301,7 @@ class DocsContractInjectedKeyTest < Minitest::Spec
 end
 
 #---
-#- Validate( key: :song ), Output(:extract_failure) => End(:my_new_end)
+#- Validate( key: :song ), Output(:extract_failure) => Terminus(:my_new_end)
 class DocsContractKeyWithOutputTest < Minitest::Spec
   Song = Class.new(ContractConstantTest::Song)
 
@@ -312,7 +313,7 @@ class DocsContractKeyWithOutputTest < Minitest::Spec
   class Song::Create < Trailblazer::Operation
     step Model(Song, :new)
     step Contract::Build(constant: Song::Contract::Create)
-    step Contract::Validate(key: "song"), Output(:extract_failure) => End(:key_not_found)
+    step Contract::Validate(key: "song"), Output(:extract_failure) => Terminus(:key_not_found)
     step Contract::Persist()
   end
   #:key-output end
@@ -507,7 +508,7 @@ class DryValidationContractTest < Minitest::Spec
   end
   #:dry-schema end
 
-  puts "@@@@@ #{Trailblazer::Developer.railway(Create, style: :rows)}"
+  # puts "@@@@@ #{Trailblazer::Developer.railway(Create, style: :rows)}"
 
   it { Create.(params: {}).inspect(:"result.contract.default").must_include "Result:false"}
   it { Create.(params: {}).inspect(:"result.contract.default").must_include "errors={:id=>[\"must be filled\""}

@@ -19,7 +19,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_dependency "reform", ">= 2.2.0", "< 3.0.0"
-  spec.add_dependency "trailblazer-activity-dsl-linear", ">= 1.3.0", "< 1.4.0"
+  spec.add_dependency "trailblazer-macro"#, ">= 1.3.0", "< 1.4.0"
 
   spec.add_development_dependency "bundler"
   spec.add_development_dependency "dry-validation"

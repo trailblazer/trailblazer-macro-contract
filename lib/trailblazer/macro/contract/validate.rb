@@ -1,93 +1,95 @@
 module Trailblazer
   module Macro
     module Contract
-      # result.contract = {..}
-      # result.contract.errors = {..}
-      # Deviate to left track if optional key is not found in params.
-      # Deviate to left if validation result falsey.
-      def self.Validate(skip_extract: false, name: "default", representer: false, key: nil, constant: nil, invalid_data_terminus: false) # DISCUSS: should we introduce something like Validate::Deserializer?
-        contract_path = :"contract.#{name}" # the contract instance
-        params_path   = :"contract.#{name}.params" # extract_params! save extracted params here.
-        key_path      = :"contract.#{name}.extract_key"
+      module Validate
+        # result.contract = {..}
+        # result.contract.errors = {..}
+        # Deviate to left track if optional key is not found in params.
+        # Deviate to left if validation result falsey.
+        def Validate(skip_extract: false, name: "default", representer: false, key: nil, constant: nil, invalid_data_terminus: false) # DISCUSS: should we introduce something like Validate::Deserializer?
+          contract_path = :"contract.#{name}" # the contract instance
+          params_path   = :"contract.#{name}.params" # extract_params! save extracted params here.
+          key_path      = :"contract.#{name}.extract_key"
 
-        extract  = Validate::Extract.new(key_path: key_path, params_path: params_path)
-        validate = Validate.new(name: name, representer: representer, params_path: params_path, contract_path: contract_path)
+          extract  = Validate::Extract.new(key_path: key_path, params_path: params_path)
+          validate = Validate.new(name: name, representer: representer, params_path: params_path, contract_path: contract_path)
 
-        # These are defaulting dependency injection, more here
-        # https://trailblazer.to/2.1/docs/activity.html#activity-dependency-injection-inject-defaulting
+          # These are defaulting dependency injection, more here
+          # https://trailblazer.to/2.1/docs/activity.html#activity-dependency-injection-inject-defaulting
 
-        # Build a simple Railway {Activity} for the internal flow.
-        activity = Activity::Railway(name: "Contract::Validate") do
-          unless skip_extract
-            step extract,
-              id: "#{params_path}_extract",
-              Output(:failure) => End(:extract_failure),
-              Inject(key_path) => ->(*) { key } # default to {key} if not injected.
-          end
-
-          step validate,
-            id: "contract.#{name}.call",
-            Inject(contract_path) => ->(*) { constant } # default the contract instance to {constant}, if not injected (or passed down from {Build()})
-        end
-
-        options = activity.Subprocess(activity)
-        options.merge!(id: "contract.#{name}.validate")
-
-        # Deviate End.extract_failure to the standard failure track as a default. This can be changed from the user side.
-        unless skip_extract
-          options.merge!(activity.Output(:extract_failure) => activity.Track(:failure))
-        end
-
-        # Halt failure track to End with {contract.name.invalid}.
-        if invalid_data_terminus
-          options.merge!(activity.Output(:failure) => activity.End(:invalid_data))
-        end
-
-        options
-      end
-
-      class Validate
-        # Task: extract the contract's input from params by reading `:key`.
-        class Extract
-          def initialize(key_path: nil, params_path: nil)
-            @key_path, @params_path = key_path, params_path
-          end
-
-          def call(ctx, params: {}, **)
-            key = ctx[@key_path] # e.g. {:song}.
-            ctx[@params_path] = key ? params[key] : params
-          end
-        end
-
-        def initialize(name: "default", contract_path:, representer: false, params_path: nil)
-          @name, @representer, @params_path, @contract_path = name, representer, params_path, contract_path
-        end
-
-        # Task: Validates contract `:name`.
-        def call(ctx, **)
-          validate!(
-            ctx,
-            representer: ctx[:"representer.#{@name}.class"] ||= @representer, # FIXME: maybe @representer should use DI.
-            params_path: @params_path
-          )
-        end
-
-        def validate!(ctx, representer: false, from: :document, params_path: nil)
-          contract = ctx[@contract_path] # grab contract instance from "contract.default" (usually set in {Contract::Build()})
-
-          # this is for 1.1-style compatibility and should be removed once we have Deserializer in place:
-          ctx[:"result.#{@contract_path}"] = result =
-            if representer
-              # use :document as the body and let the representer deserialize to the contract.
-              # this will be simplified once we have Deserializer.
-              # translates to contract.("{document: bla}") { MyRepresenter.new(contract).from_json .. }
-              contract.(ctx[from]) { |document| representer.new(contract).parse(document) }
-            else
-              # let Reform handle the deserialization.
-              contract.(ctx[params_path])
+          # Build a simple Railway {Activity} for the internal flow.
+          activity = Class.new(Activity::Railway) do # (name: "Contract::Validate")
+            unless skip_extract
+              step extract,
+                id: "#{params_path}_extract",
+                Output(:failure) => Terminus(:extract_failure),
+                Inject(key_path) => ->(*) { key } # default to {key} if not injected.
             end
 
-          result.success?
+            step validate,
+              id: "contract.#{name}.call",
+              Inject(contract_path) => ->(*) { constant } # default the contract instance to {constant}, if not injected (or passed down from {Build()})
+          end
+
+          options = activity.Subprocess(activity)
+          options.merge!(id: "contract.#{name}.validate")
+
+          # Deviate End.extract_failure to the standard failure track as a default. This can be changed from the user side.
+          unless skip_extract
+            options.merge!(activity.Output(:extract_failure) => activity.Track(:failure))
+          end
+
+          # Halt failure track to End with {contract.name.invalid}.
+          if invalid_data_terminus
+            options.merge!(activity.Output(:failure) => activity.Terminus(:invalid_data))
+          end
+
+          options
+        end
+
+        class Validate
+          # Task: extract the contract's input from params by reading `:key`.
+          class Extract
+            def initialize(key_path: nil, params_path: nil)
+              @key_path, @params_path = key_path, params_path
+            end
+
+            def call(ctx, params: {}, **)
+              key = ctx[@key_path] # e.g. {:song}.
+              ctx[@params_path] = key ? params[key] : params
+            end
+          end
+
+          def initialize(name: "default", contract_path:, representer: false, params_path: nil)
+            @name, @representer, @params_path, @contract_path = name, representer, params_path, contract_path
+          end
+
+          # Task: Validates contract `:name`.
+          def call(ctx, **)
+            validate!(
+              ctx,
+              representer: ctx[:"representer.#{@name}.class"] ||= @representer, # FIXME: maybe @representer should use DI.
+              params_path: @params_path
+            )
+          end
+
+          def validate!(ctx, representer: false, from: :document, params_path: nil)
+            contract = ctx[@contract_path] # grab contract instance from "contract.default" (usually set in {Contract::Build()})
+
+            # this is for 1.1-style compatibility and should be removed once we have Deserializer in place:
+            ctx[:"result.#{@contract_path}"] = result =
+              if representer
+                # use :document as the body and let the representer deserialize to the contract.
+                # this will be simplified once we have Deserializer.
+                # translates to contract.("{document: bla}") { MyRepresenter.new(contract).from_json .. }
+                contract.(ctx[from]) { |document| representer.new(contract).parse(document) }
+              else
+                # let Reform handle the deserialization.
+                contract.(ctx[params_path])
+              end
+
+            result.success?
+          end
         end
       end
     end
