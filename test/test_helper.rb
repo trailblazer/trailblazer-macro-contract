@@ -47,6 +47,7 @@ end
 
 T = Trailblazer::Core
 
-# Minitest::Spec.class_eval do
-#   include Trailblazer::Activity::Testing::Assertions
-# end
+Minitest::Spec.class_eval do
+  include Trailblazer::Core::Utils::AssertRun
+  include Trailblazer::Core::Utils::AssertEqual
+end
