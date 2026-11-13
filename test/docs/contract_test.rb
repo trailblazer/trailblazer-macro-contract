@@ -60,7 +60,7 @@ class DocsContractOverviewTest < Minitest::Spec
       Trailblazer::Developer.wtf?(Create, {params: {length: "A"}}, id: "DocsContractOverviewTest::Create", only_application: true)
     end
 
-    output.gsub(/\e\[\d+m/, "").must_equal %{DocsContractOverviewTest::Create
+    assert_equal output.gsub(/\e\[\d+m/, ""), %(DocsContractOverviewTest::Create
 |-- model.build
 |-- contract.build
 |-- contract.default.validate
@@ -68,7 +68,7 @@ class DocsContractOverviewTest < Minitest::Spec
 |   |-- contract.default.call
 |   `-- End.failure
 `-- End.failure
-}
+)
   end
 
   # internal variables from {:builder} are excluded in public ctx.
