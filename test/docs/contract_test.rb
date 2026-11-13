@@ -56,19 +56,19 @@ class DocsContractOverviewTest < Minitest::Spec
   end
 
   it "shows 2-level tracing" do
-    stack, _ = Trailblazer::Developer::Trace.(Create, [params: {length: "A"}] )
-    output = Trailblazer::Developer::Trace::Present.(stack)
+    output, _ = capture_io do
+      Trailblazer::Developer.wtf?(Create, {params: {length: "A"}}, id: "DocsContractOverviewTest::Create", only_application: true)
+    end
 
-    output.gsub(/0x\w+/, "").must_equal %{DocsContractOverviewTest::Create
-|-- Start.default
+    output.gsub(/\e\[\d+m/, "").must_equal %{DocsContractOverviewTest::Create
 |-- model.build
 |-- contract.build
 |-- contract.default.validate
-|   |-- Start.default
 |   |-- contract.default.params_extract
 |   |-- contract.default.call
 |   `-- End.failure
-`-- End.failure}
+`-- End.failure
+}
   end
 
   # internal variables from {:builder} are excluded in public ctx.
@@ -601,52 +601,15 @@ class DocContractBuilderTest < Minitest::Spec
   end
   #:builder-option end
 
-  it { Create.(params: {}).inspect(:model).must_equal %{<Result:false [#<struct DocContractBuilderTest::Song id=nil, title=nil>] >} }
-  it { Create.(params: { title: "title"}, current_user: Module).inspect(:model).must_equal %{<Result:true [#<struct DocContractBuilderTest::Song id=nil, title="title">] >} }
+  it { assert_run Create, target_ctx: {params: {}}, terminus: :failure, expected_target_variables: {model: Song.new} }
+  it { assert_run Create, target_ctx: {params: {title: "title"}, current_user: Module}, terminus: :success, expected_target_variables: {model: Song.new(nil, "title")} }
   # internal variables from {:builder} are excluded in public ctx.
-  it { Create.(params: {}).keys.inspect.must_equal %{[:params, :model, :\"contract.default\", :\"contract.default.params\", :\"representer.default.class\", :\"result.contract.default\"]} }
+  it do
+    lib_ctx, _ = assert_run Create, target_ctx: {params: {}}, terminus: :failure
+    assert_equal lib_ctx[:target_ctx].keys, [:params, :model, :"contract.default", :"contract.default.params", :"representer.default.class", :"result.contract.default"]
+  end
 end
 
-class DocContractTest < Minitest::Spec
-  Song = Struct.new(:id, :title)
-  #---
-  # with contract block, and inheritance, the old way.
-  class Block < Trailblazer::Operation
-    class MyContract < Reform::Form
-      property :title
-    end
-
-    step Model( Song, :new )
-    step Contract::Build(constant: MyContract)            # resolves to "contract.class.default" and is resolved at runtime.
-    step Contract::Validate()
-    step Contract::Persist( method: :sync )
-  end
-
-  it { Block.(params: {}).inspect(:model).must_equal %{<Result:true [#<struct DocContractTest::Song id=nil, title=nil>] >} }
-  it { Block.(params: { id:1, title: "Fame" }).inspect(:model).must_equal %{<Result:true [#<struct DocContractTest::Song id=nil, title="Fame">] >} }
-
-  class Breach < Block
-    class MyContract < MyContract
-      property :id
-    end
-
-    step Contract::Build(constant: MyContract), replace: "contract.build"
-  end
-
-  it { Breach.(params: { id:1, title: "Fame" }).inspect(:model).must_equal %{<Result:true [#<struct DocContractTest::Song id=1, title="Fame">] >} }
-
-  #-
-  # with constant.
-  class Break < Block
-    class MyContract < Reform::Form
-      property :id
-    end
-    # override the original block as if it's never been there.
-    step Contract::Build(constant: MyContract), replace: "contract.build"
-  end
-
-  it { Break.(params: { id:1, title: "Fame" }).inspect(:model).must_equal %{<Result:true [#<struct DocContractTest::Song id=1, title=nil>] >} }
-end
 
 class ModelMissingTest < Minitest::Spec
   class Create < Trailblazer::Operation

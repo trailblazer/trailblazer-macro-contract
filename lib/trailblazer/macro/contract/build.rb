@@ -4,7 +4,17 @@ module Trailblazer
   module Macro
     module Contract
       module Build
+        class Atom < DSL::Atom
+          def build_node(**options)
+            Build.build_node(**options)
+          end
+        end
+
         def Build(name: "default", constant: nil, builder: nil)
+          Atom.new({name: name, constant: constant, builder: builder})
+        end
+
+        def self.build_node(name:, constant:, builder:, exec_context:, **)
           contract_path = :"contract.#{name}"
 
           injections = {
@@ -31,7 +41,7 @@ module Trailblazer
           task_option_proc = builder || default_contract_builder
 
           # after the builder proc is run, assign its result to {:"contract.default"}.
-          task = Macro.task_adapter_for_decider(task_option_proc, variable_name: contract_path)
+          task = Macro.task_adapter_for_decider(task_option_proc, variable_name: contract_path, exec_context: exec_context)
 
           {
             task: task,
@@ -41,24 +51,6 @@ module Trailblazer
             .merge(injections)
             .merge(input)
             .merge(output)
-        end
-
-        module DSL
-          # This is the class level DSL method.
-          #   Op.contract #=> returns contract class
-          #   Op.contract do .. end # defines contract
-          #   Op.contract CommentForm # copies (and subclasses) external contract.
-          #   Op.contract CommentForm do .. end # copies and extends contract.
-          def contract(name = :default, constant = nil, base: Reform::Form, &block)
-            heritage.record(:contract, name, constant, &block)
-
-            path, form_class = Trailblazer::DSL::Build.new.(
-              {prefix: :contract, class: base, container: self},
-              name, constant, block
-            )
-
-            self[path] = form_class
-          end
         end
       end
     end
