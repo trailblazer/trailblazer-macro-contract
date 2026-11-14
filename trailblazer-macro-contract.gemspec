@@ -23,10 +23,10 @@ Gem::Specification.new do |spec|
 
   spec.add_development_dependency "bundler"
   spec.add_development_dependency "dry-validation"
-  spec.add_development_dependency "reform-rails", "~> 0.2.0.rc2"
+  spec.add_development_dependency "reform-rails", ">= 0.3.0"
   spec.add_development_dependency "trailblazer-macro"#, ">= 2.2.0", "< 2.3.0"
   spec.add_development_dependency "trailblazer-developer"
-  spec.add_development_dependency "activemodel", "~> 6.0.0" # FIXME: we still don't support the Rails 6.1 errors object.
+  spec.add_development_dependency "activemodel", ">= 7.2"
 
   spec.add_development_dependency "minitest"
   spec.add_development_dependency "rake"
