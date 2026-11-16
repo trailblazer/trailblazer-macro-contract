@@ -10,7 +10,7 @@ module Trailblazer
 
           {
             node_for_call_task: node,
-            id:   :"persist.save"
+            id:   :"persist.#{method}"
           }
         end
       end
