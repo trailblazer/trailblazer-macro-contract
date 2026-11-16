@@ -33,7 +33,7 @@ class DocsContractOverviewTest < Minitest::Spec
    1 =======================>contract.build
    2 ==============&validate.params.extract
    3 ====================&contract.validate
-   4 =========================&persist.save
+   4 =========================&persist.sync
   #:overv-reform-pipe end
 =end
 
@@ -69,6 +69,27 @@ class DocsContractOverviewTest < Minitest::Spec
 |   `-- End.failure
 `-- End.failure
 )
+  end
+
+  # {Persist} derives its ID from {:method}, so sync and save can live in one operation.
+  SavableSong = Struct.new(:length, :title) do
+    def save = true
+  end
+
+  class SyncAndSave < Trailblazer::Operation
+    step Model(SavableSong, :new)
+    step Contract::Build(constant: Create::MyContract)
+    step Contract::Validate()
+    step Contract::Persist(method: :sync)
+    step Contract::Persist()
+  end
+
+  it "Persist IDs default to persist.{method}" do
+    output, _ = capture_io do
+      Trailblazer::Developer.wtf?(SyncAndSave, {params: {title: "Rising Force", length: 13}}, id: "SyncAndSave", only_application: true)
+    end
+
+    assert_match(/\|-- persist\.sync\n\|-- persist\.save\n/, output.gsub(/\e\[\d+m/, ""))
   end
 
   # internal variables from {:builder} are excluded in public ctx.
