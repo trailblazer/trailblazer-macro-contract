@@ -25,7 +25,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "dry-validation"
   spec.add_development_dependency "reform-rails", ">= 0.3.0"
   spec.add_development_dependency "trailblazer-developer"
-  spec.add_development_dependency "activemodel", ">= 8.0"
+  spec.add_development_dependency "activemodel", ">= 7.0"
 
   spec.add_development_dependency "minitest"
   spec.add_development_dependency "rake"
