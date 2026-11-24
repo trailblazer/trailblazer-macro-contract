@@ -558,7 +558,8 @@ class DryValidationContractTest < Minitest::Spec
     result = Song::Operation::Archive.(params: {song: {id: nil}})
     #:dry-contract-call end
 
-    _(result[:"result.contract.default"].errors.inspect).must_equal %{#<Dry::Validation::MessageSet messages=[#<Dry::Schema::Message text=\"must be filled\" path=[:id] predicate=:filled? input=nil>] options={:source=>[#<Dry::Schema::Message text=\"must be filled\" path=[:id] predicate=:filled? input=nil>], :hints=>false}>}
+    assert_equal result[:"result.contract.default"].errors.to_h, {:id=>["must be filled"]}
+    # %{#<Dry::Validation::MessageSet messages=[#<Dry::Schema::Message text=\"must be filled\" path=[:id] predicate=:filled? input=nil>] options={:source=>[#<Dry::Schema::Message text=\"must be filled\" path=[:id] predicate=:filled? input=nil>], :hints=>false}>}
 
     # raise result[:"result.contract.default"].errors.messages[0].to_s.inspect
     assert_equal result[:"result.contract.default"].errors[:id].inspect, %{["must be filled"]}
